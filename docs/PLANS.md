@@ -21,7 +21,7 @@
 - [x] 기획서 초안 작성
 
 ### Phase 2: 핵심 구현
-- [ ] Next.js 프로젝트 scaffolding
+- [x] Next.js 프로젝트 scaffolding
 - [ ] 데이터 수집 스크립트 (yfinance → JSON)
 - [ ] 분석 엔진 구현 (skills/data-analysis.md 기반)
 - [ ] 차트 컴포넌트 구현 (skills/visualization.md 기반)
@@ -43,7 +43,7 @@
 ---
 
 ## In Progress
-- [ ] Next.js 프로젝트 scaffolding
+- [ ] 데이터 수집 스크립트 (yfinance → JSON)
 
 ## Done
 
@@ -55,3 +55,6 @@
 - [x] Skills.md 초안 작성 — 5개 파일 완성, 데이터 소스 정합성 보완 (2026-04-11)
 - [x] 대시보드 와이어프레임 설계 — 4페이지 상세 레이아웃 + 컴포넌트 매핑 + 인터랙션 흐름 (2026-04-11)
 - [x] 기획서 초안 작성 — 8개 섹션, deliverables/proposal-draft.md (2026-04-11)
+
+### Phase 2
+- [x] Next.js 프로젝트 scaffolding — 4페이지 + lib 3개 + types, TypeScript 통과 (2026-04-11)
