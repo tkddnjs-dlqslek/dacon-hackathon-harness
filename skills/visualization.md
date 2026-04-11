@@ -6,22 +6,21 @@
 
 ### 1.1 선택 매트릭스
 
-| 데이터 특성 | 목적 | 차트 유형 | 비고 |
-|------------|------|----------|------|
-| 시계열 + 단일 종목 | 추세 확인 | Line Chart | 기본 |
-| 시계열 + 다중 종목 | 비교 | Multi-line Chart | 최대 8개, 초과 시 범례 축소 |
-| 시계열 + 누적 비중 | 구성 변화 | Stacked Area Chart | 포트폴리오 비중 변화 |
-| 단일 값 비교 (N≤8) | 순위/비교 | Bar Chart (가로) | 정렬: 값 내림차순 |
-| 단일 값 비교 (N>8) | 순위/비교 | Bar Chart (세로) | 스크롤 허용 |
-| 구성 비율 | 비중 확인 | Donut Chart | 항목 ≤ 6개, 초과 시 "기타" 묶음 |
-| 2변수 관계 | 상관관계 | Scatter Plot | 상관계수 표시 |
-| N×N 관계 | 상관 매트릭스 | Heatmap | 색상: 발산형 (파랑↔빨강) |
-| 분포 | 수익률 분포 | Histogram | bin 수: Sturges 규칙 |
-| 단일 KPI | 핵심 수치 강조 | Metric Card | 전일/전월 대비 변화 표시 |
-| 최대 낙폭 | 리스크 시각화 | Area Chart (음영) | 고점→저점 구간 강조 |
-| A vs B 시계열 | 두 전략 비교 | Dual Line Chart | ETF vs 직접투자. 영역 차이 음영 표시 |
-| A vs B 단일값 비교 | 지표별 비교 | Grouped Bar Chart | 같은 지표를 나란히 비교 |
-| 비용 누적 비교 | 시간에 따른 비용 | Stacked Area (2계열) | ETF 보수 vs 거래비용 누적 |
+| 데이터 특성 | 목적 | 차트 유형 | 구현 파일 | 상태 |
+|------------|------|----------|----------|------|
+| 시계열 + 단일 종목 | 추세 확인 | Line Chart | CumulativeReturnChart (seriesCount=1) | ✅ |
+| 시계열 + 다중 종목 | 비교 | Multi-line Chart | CumulativeReturnChart.tsx | ✅ |
+| 시계열 + 누적 비중 | 구성 변화 | Stacked Area Chart | — | Phase 3 |
+| 단일 값 비교 | 순위/비교 | Bar Chart (가로/세로) | SectorBarChart.tsx | ✅ |
+| 구성 비율 | 비중 확인 | Donut Chart | SectorDonutChart.tsx | ✅ |
+| 2변수 관계 | 상관관계 | Scatter Plot | — | Phase 3 |
+| N×N 관계 | 상관 매트릭스 | Heatmap | page.tsx (HTML table 기반) | ✅ |
+| 분포 | 수익률 분포 | Histogram | — | Phase 3 |
+| 단일 KPI | 핵심 수치 강조 | Metric Card | 인라인 JSX (각 페이지) | ✅ |
+| 최대 낙폭 | 리스크 시각화 | Area Chart (음영) | — | Phase 3 |
+| A vs B 시계열 | 두 전략 비교 | Dual Line Chart | DualLineChart.tsx | ✅ |
+| A vs B 단일값 비교 | 지표별 비교 | Grouped Bar Chart | GroupedBarChart.tsx | ✅ |
+| 비용 누적 비교 | 시간에 따른 비용 | Stacked Area (2계열) | — | Phase 3 |
 
 ### 1.2 자동 선택 로직 (의사코드)
 

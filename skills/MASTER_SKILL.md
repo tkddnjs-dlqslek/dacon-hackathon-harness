@@ -52,3 +52,22 @@
 - 특정 티커/섹터를 하드코딩하지 않는다.
 - 모든 규칙은 데이터의 **특성**(시계열 여부, 값 범위, 데이터 타입)에 따라 분기한다.
 - 새로운 ETF/섹터 데이터를 추가해도 Skills 규칙만으로 자동 대응한다.
+
+## Skills → 코드 매핑 (v2)
+
+| Skills 문서 | 구현 파일 | 구현률 |
+|------------|----------|-------|
+| `data-analysis.md` §1~§3 | `lib/analysis-engine.ts` | 100% — 결측치, 수익률, 변동성, 샤프, MDD, 베타, 상관행렬, 공분산, 리밸런싱 |
+| `data-analysis.md` §4 | `lib/analysis-engine.ts` + `ComparePanel.tsx` | 90% — 시총비중만 Phase 3 |
+| `visualization.md` §1 | `components/charts/` (5 파일) + 인라인 | 9/13 차트 구현 (4개 Phase 3) |
+| `visualization.md` §2~§3 | `globals.css` + Tailwind | 100% — 색상, 다크모드, 반응형 |
+| `insight-generation.md` §2~§5 | `lib/insight-generator.ts` | 100% — ETF/포트폴리오/섹터/비교 |
+| `insight-generation.md` §6 | `lib/insight-generator.ts` | 100% — 우선순위 정렬 + top5 |
+| `report-layout.md` §1 | `app/` 4개 페이지 | 100% — 메인/섹터/포트폴리오/비교 |
+
+## 변경 이력
+
+| 버전 | 날짜 | 변경 내용 |
+|------|------|----------|
+| v1 | 2026-04-11 | 초안 — 5개 파일, 전체 규칙 정의 |
+| v2 | 2026-04-12 | 구현 대조 갭 보완 — 차트 구현 상태 추적, §4.5 제약사항, 코드 매핑 테이블 |

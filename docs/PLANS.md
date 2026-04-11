@@ -1,6 +1,6 @@
 # Plans
 
-## Current Phase: Phase 2 — 핵심 구현
+## Current Phase: Phase 3 — 완성 & 배포
 
 ## Phases Overview
 | Phase | 내용 | 기한 |
@@ -30,7 +30,7 @@
 - [x] ETF vs 직접투자 비교 엔진 (skills/data-analysis.md §4 기반)
 - [x] ETF vs 직접투자 비교 페이지 (/compare)
 - [x] 개별종목 데이터 수집 (섹터별 상위 N개)
-- [ ] Skills.md v2 — 테스트 후 갭 보완
+- [x] Skills.md v2 — 테스트 후 갭 보완
 
 ### Phase 3: 완성 & 배포
 - [ ] UI 디자인 완성 (반응형, 다크모드)
@@ -43,7 +43,7 @@
 ---
 
 ## In Progress
-- [ ] Skills.md v2 — 테스트 후 갭 보완
+- [ ] UI 디자인 완성 (반응형, 다크모드)
 
 ## Done
 
@@ -64,3 +64,4 @@
 - [x] 인사이트 자동 생성 — §2~§5 전체 구현, 메인+섹터 페이지 실데이터 연결, 섹터 상세 페이지 풀 리빌드 (2026-04-11)
 - [x] 포트폴리오 구성 & 리밸런싱 — 인터랙티브 슬라이더(11 ETF) + 백테스트(vs SPY) + 리밸런싱 5단계 비교, DualLine 차트 연결 (2026-04-11)
 - [x] ETF vs 직접투자 비교 + /compare 페이지 + 개별종목 연결 — 11 섹터 선택, Top 3/5/10, 리밸런싱 3단계, 1Y/2Y, KPI+DualLine+GroupedBar+Holdings 테이블 (2026-04-12)
+- [x] Skills.md v2 — 구현 대조 갭 보완: 차트 구현 상태 9/13, 코드 매핑 테이블, §4.5 제약사항, 리밸런싱 신호 Phase 3 명시 (2026-04-12)
