@@ -1,7 +1,33 @@
 // 분석 엔진 — skills/data-analysis.md 규칙 구현
 // §1 전처리, §2 지표 계산, §3 포트폴리오, §4 ETF vs 직접투자
 
-import type { OHLCVData, ETFMetrics, PeriodLabel } from "@/types";
+import type { OHLCVData, ETFMetrics, PeriodLabel, CompareSettings, CompareResult } from "@/types";
+
+// ── §1.2 결측치 처리 ─────────────────────────────────
+
+export function fillMissing(data: OHLCVData[]): OHLCVData[] {
+  if (data.length === 0) return data;
+  const result = [...data];
+  let consecutiveGap = 0;
+
+  for (let i = 1; i < result.length; i++) {
+    if (result[i].close === 0 || isNaN(result[i].close)) {
+      consecutiveGap++;
+      if (consecutiveGap <= 2) {
+        // forward fill (1~2일)
+        result[i] = { ...result[i], close: result[i - 1].close, open: result[i - 1].close, high: result[i - 1].close, low: result[i - 1].close };
+      }
+      // 3일+ 연속은 그대로 두고 UI에서 경고
+    } else {
+      consecutiveGap = 0;
+    }
+    // 거래량 결측 → 0
+    if (isNaN(result[i].volume)) {
+      result[i] = { ...result[i], volume: 0 };
+    }
+  }
+  return result;
+}
 
 // §1.3 일간 수익률
 export function dailyReturns(data: OHLCVData[]): number[] {
@@ -115,8 +141,78 @@ export function computeMetrics(
     volatility: volatility(data),
     sharpe: sharpeRatio(data, riskFreeRate),
     mdd: maxDrawdown(data),
-    beta: 0, // SPY 데이터와 함께 계산 시 채움
+    beta: 0,
   };
+}
+
+// §2.1 베타 (vs 벤치마크)
+export function beta(assetReturns: number[], benchmarkReturns: number[]): number {
+  const n = Math.min(assetReturns.length, benchmarkReturns.length);
+  const a = assetReturns.slice(-n);
+  const b = benchmarkReturns.slice(-n);
+
+  const meanB = b.reduce((s, v) => s + v, 0) / n;
+  const meanA = a.reduce((s, v) => s + v, 0) / n;
+
+  let cov = 0, varB = 0;
+  for (let i = 0; i < n; i++) {
+    cov += (a[i] - meanA) * (b[i] - meanB);
+    varB += (b[i] - meanB) ** 2;
+  }
+
+  return varB === 0 ? 0 : cov / varB;
+}
+
+// §2.1 + SPY 기반 전체 지표 (베타 포함)
+export function computeMetricsWithBenchmark(
+  ticker: string,
+  data: OHLCVData[],
+  benchmarkData: OHLCVData[],
+  riskFreeRate: number
+): ETFMetrics {
+  const metrics = computeMetrics(ticker, data, riskFreeRate);
+  const assetRet = dailyReturns(data);
+  const benchRet = dailyReturns(benchmarkData);
+  metrics.beta = beta(assetRet, benchRet);
+  return metrics;
+}
+
+// ── §2 상관관계 행렬 ─────────────────────────────────
+
+export function correlationMatrix(allReturns: number[][]): number[][] {
+  const n = allReturns.length;
+  const matrix: number[][] = Array.from({ length: n }, () => Array(n).fill(0));
+  for (let i = 0; i < n; i++) {
+    matrix[i][i] = 1;
+    for (let j = i + 1; j < n; j++) {
+      const corr = correlation(allReturns[i], allReturns[j]);
+      matrix[i][j] = corr;
+      matrix[j][i] = corr;
+    }
+  }
+  return matrix;
+}
+
+// 공분산 행렬 (연환산)
+export function covarianceMatrix(allReturns: number[][]): number[][] {
+  const n = allReturns.length;
+  const len = Math.min(...allReturns.map((r) => r.length));
+  const trimmed = allReturns.map((r) => r.slice(-len));
+  const means = trimmed.map((r) => r.reduce((a, b) => a + b, 0) / len);
+  const matrix: number[][] = Array.from({ length: n }, () => Array(n).fill(0));
+
+  for (let i = 0; i < n; i++) {
+    for (let j = i; j < n; j++) {
+      let cov = 0;
+      for (let k = 0; k < len; k++) {
+        cov += (trimmed[i][k] - means[i]) * (trimmed[j][k] - means[j]);
+      }
+      const annualized = (cov / (len - 1)) * 252;
+      matrix[i][j] = annualized;
+      matrix[j][i] = annualized;
+    }
+  }
+  return matrix;
 }
 
 // §3.1 포트폴리오 가중 수익률
@@ -139,4 +235,142 @@ export function portfolioVolatility(
     }
   }
   return Math.sqrt(result);
+}
+
+// §3.4 리밸런싱 시뮬레이션
+export function rebalanceSimulation(
+  allData: OHLCVData[][],  // 각 ETF의 가격 시계열
+  targetWeights: number[],
+  rebalancePeriodDays: number, // 0 = 바이앤홀드
+  initialInvestment: number = 10000
+): { dates: string[]; rebalanced: number[]; buyAndHold: number[] } {
+  const len = Math.min(...allData.map((d) => d.length));
+  const n = allData.length;
+  const dates: string[] = [];
+  const rebalanced: number[] = [];
+  const buyAndHold: number[] = [];
+
+  // 초기 배분
+  let rbShares = targetWeights.map((w, i) => (w * initialInvestment) / allData[i][0].close);
+  let bhShares = [...rbShares];
+  let daysSinceRebalance = 0;
+
+  for (let d = 0; d < len; d++) {
+    dates.push(allData[0][d].date);
+
+    // 현재 포트폴리오 가치
+    const rbValue = rbShares.reduce((s, sh, i) => s + sh * allData[i][d].close, 0);
+    const bhValue = bhShares.reduce((s, sh, i) => s + sh * allData[i][d].close, 0);
+    rebalanced.push(rbValue);
+    buyAndHold.push(bhValue);
+
+    // 리밸런싱
+    daysSinceRebalance++;
+    if (rebalancePeriodDays > 0 && daysSinceRebalance >= rebalancePeriodDays && d < len - 1) {
+      rbShares = targetWeights.map((w, i) => (w * rbValue) / allData[i][d].close);
+      daysSinceRebalance = 0;
+    }
+  }
+
+  return { dates, rebalanced, buyAndHold };
+}
+
+// ── §4 ETF vs 직접투자 비교 시뮬레이션 ──────────────
+
+export function compareETFvsDirect(
+  etfData: OHLCVData[],
+  stocksData: OHLCVData[][], // 개별종목 배열
+  settings: CompareSettings,
+  riskFreeRate: number
+): CompareResult {
+  const len = Math.min(etfData.length, ...stocksData.map((d) => d.length));
+  const n = stocksData.length;
+
+  // 비중 결정
+  const stockWeights = settings.weightMethod === "equal"
+    ? Array(n).fill(1 / n)
+    : Array(n).fill(1 / n); // TODO: 시총 비중은 메타데이터 필요
+
+  const dates: string[] = [];
+  const etfCumulative: number[] = [];
+  const directCumulative: number[] = [];
+
+  // 초기 투자
+  const init = settings.initialInvestment;
+  const fee = settings.tradingFee;
+  const expenseDaily = 0.0008 / 252; // ETF 보수 일할
+
+  let etfShares = (init * (1 - fee)) / etfData[0].close;
+  let directShares = stockWeights.map((w, i) => (w * init * (1 - fee)) / stocksData[i][0].close);
+  let etfTotalCost = init * fee;
+  let directTotalCost = n * init * fee; // N번 거래
+
+  // 리밸런싱 주기 (거래일 기준)
+  const rbDays = settings.rebalancePeriod === "monthly" ? 21
+    : settings.rebalancePeriod === "quarterly" ? 63
+    : 0;
+  let daysSinceRb = 0;
+
+  for (let d = 0; d < len; d++) {
+    dates.push(etfData[d].date);
+
+    // ETF 가치 (보수 차감)
+    const etfValue = etfShares * etfData[d].close;
+    etfShares *= (1 - expenseDaily); // 일할 보수 차감
+    etfTotalCost += etfValue * expenseDaily;
+    etfCumulative.push(etfShares * etfData[d].close);
+
+    // 직접투자 가치
+    const directValue = directShares.reduce((s, sh, i) => s + sh * stocksData[i][d].close, 0);
+    directCumulative.push(directValue);
+
+    // 직접투자 리밸런싱
+    daysSinceRb++;
+    if (rbDays > 0 && daysSinceRb >= rbDays && d < len - 1) {
+      const rbCost = n * directValue * fee;
+      directTotalCost += rbCost;
+      const afterFee = directValue - rbCost;
+      directShares = stockWeights.map((w, i) => (w * afterFee) / stocksData[i][d].close);
+      daysSinceRb = 0;
+    }
+  }
+
+  // 지표 계산 (누적 수익률 배열 → OHLCVData 변환)
+  const toOHLCV = (values: number[]): OHLCVData[] =>
+    values.map((v, i) => ({ date: dates[i], open: v, high: v, low: v, close: v, volume: 0 }));
+
+  const etfOHLCV = toOHLCV(etfCumulative);
+  const directOHLCV = toOHLCV(directCumulative);
+
+  // 개별 종목 기여도
+  const holdings = stocksData.map((sd, i) => {
+    const ret = len >= 2 ? sd[len - 1].close / sd[0].close - 1 : 0;
+    const vol = volatility(sd.slice(0, len));
+    return {
+      symbol: "", // 호출자가 채움
+      weight: stockWeights[i],
+      returnPct: ret,
+      volatility: vol,
+      contribution: stockWeights[i] * ret,
+    };
+  });
+
+  return {
+    etf: {
+      cumulativeReturn: etfCumulative,
+      totalCost: etfTotalCost,
+      volatility: volatility(etfOHLCV),
+      sharpe: sharpeRatio(etfOHLCV, riskFreeRate),
+      mdd: maxDrawdown(etfOHLCV),
+    },
+    direct: {
+      cumulativeReturn: directCumulative,
+      totalCost: directTotalCost,
+      volatility: volatility(directOHLCV),
+      sharpe: sharpeRatio(directOHLCV, riskFreeRate),
+      mdd: maxDrawdown(directOHLCV),
+    },
+    dates,
+    holdings,
+  };
 }
