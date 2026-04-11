@@ -14,7 +14,7 @@
 ## TODO
 
 ### Phase 1: 기획 & 설계
-- [ ] 데이터 소스 조사 & 확정 (yfinance, 대안 API 비교)
+- [x] 데이터 소스 조사 & 확정 (yfinance, 대안 API 비교)
 - [ ] 섹터별 대표 ETF 목록 정의
 - [ ] Skills.md 초안 작성 (data-analysis, visualization, insight-generation)
 - [ ] 대시보드 와이어프레임 설계
@@ -48,3 +48,4 @@
 ## Done
 - [x] Harness 구조 설계
 - [x] 기술 스택 확정 (Next.js + Recharts + Vercel)
+- [x] 데이터 소스 조사 & 확정 — yfinance 1차, FRED 보조, 정적 JSON fallback (2026-04-11)
