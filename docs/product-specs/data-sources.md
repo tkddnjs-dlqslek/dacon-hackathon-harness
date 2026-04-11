@@ -6,21 +6,31 @@
 
 ## 확정 데이터 소스 스택
 
-| 용도 | 소스 | 이유 |
-|------|------|------|
-| **가격 데이터 (1차)** | yfinance | 무료·무키·빠름, 2년+ 이력, 일괄 다운로드 지원 |
-| **ETF 구성종목** | yfinance `funds_data.top_holdings` | 실시간 상위 10 종목 + 비중 제공 확인 완료 |
-| **보조 (매크로)** | FRED | 무위험수익률(T-Bill), 인플레이션 등 매크로 지표 |
-| **가격 데이터 (fallback)** | 정적 JSON (`data/`) | yfinance 장애 시 대시보드 동작 보장 |
+> **설계 원칙**: 심사자가 별도 API 키 없이 `pip install yfinance` 한 줄로 전체 재현 가능
 
-### 기각된 대안
+| 용도 | 소스 | API 키 | 이유 |
+|------|------|--------|------|
+| **가격 데이터** | yfinance | 불필요 | 무료·빠름, 2년+ 이력, 일괄 다운로드 |
+| **ETF 구성종목** | yfinance `funds_data.top_holdings` | 불필요 | 상위 10 종목 + 비중 실시간 제공 |
+| **무위험수익률** | yfinance `^IRX` (13-Week T-Bill) | 불필요 | FRED 대체 — 샤프 비율 계산용 |
+| **시장 지표** | yfinance `^GSPC`, `^VIX` | 불필요 | 벤치마크, 변동성 지수 |
+| **배당 데이터** | yfinance `Ticker.dividends` | 불필요 | ETF 분배금 이력 |
+| **fallback** | 정적 JSON (`data/`) | 불필요 | yfinance 장애 시 대시보드 동작 보장 |
 
-| API | 기각 이유 |
-|-----|----------|
-| Alpha Vantage | 무료 25 req/day — 8 ETF + 40 종목 커버 불가 |
-| Twelve Data | 800 req/day 충분하나, yfinance가 무제한이므로 불필요 |
-| FMP | ETF holdings 제공하지만 yfinance로 충분 |
-| Polygon.io | 무료 tier 5 req/min, holdings는 유료 |
+### 외부 API 키 의존성: 없음 (0개)
+
+yfinance가 모든 데이터를 커버하므로 FRED 등 키 필요 API는 사용하지 않는다.
+심사자는 `pip install yfinance && python collect.py` 만으로 전체 데이터를 재현할 수 있다.
+
+### 조사한 대안 API
+
+| API | 무료 한도 | API 키 | 기각 이유 |
+|-----|----------|--------|----------|
+| Alpha Vantage | 25 req/day | 필요 | 요청 한도 부족 + 키 필요 |
+| FRED | 무제한 | 필요 | yfinance `^IRX`로 대체 가능 |
+| Twelve Data | 800 req/day | 필요 | yfinance 무제한이므로 불필요 |
+| FMP | 250 req/day | 필요 | ETF holdings도 yfinance로 충분 |
+| Polygon.io | 5 req/min | 필요 | holdings 유료 + 키 필요 |
 
 ---
 
@@ -43,6 +53,18 @@
 | `funds_data.sector_weightings` | ✅ 11개 섹터 비중 |
 | `funds_data.asset_classes` | ✅ 주식/채권/현금 비중 |
 | `info.netExpenseRatio` | ✅ 보수율 (전 ETF 0.08~0.09%) |
+
+### 무위험수익률 & 매크로 (yfinance 단독 커버)
+
+| 티커 | 이름 | 용도 | 실측 결과 |
+|------|------|------|----------|
+| `^IRX` | 13-Week T-Bill Rate (CBOE) | 무위험수익률 → 샤프 비율 | ✅ 251행, 최신 3.59% |
+| `^TNX` | 10-Year Treasury Yield | 장기 금리 참고 | ✅ 251행, 최신 4.32% |
+| `^GSPC` | S&P 500 Index | 시장 벤치마크 | ✅ |
+| `^VIX` | VIX | 시장 변동성 지수 | ✅ |
+| `GLD` | SPDR Gold Trust | 대체 자산 비교 (선택) | ✅ |
+
+> FRED의 DTB3(T-Bill)을 `^IRX`로 완전 대체. API 키 의존성 제거.
 
 ### 알려진 리스크
 
@@ -113,9 +135,12 @@ data/
 └── last-updated.json     # 마지막 갱신 시각
 ```
 
-### FRED 데이터 (보조)
+### 재현 가이드 (심사자용)
 
-| 시리즈 ID | 이름 | 용도 |
-|-----------|------|------|
-| DTB3 | 3-Month T-Bill Rate | 무위험수익률 (샤프 비율 계산) |
-| CPIAUCSL | CPI (선택) | 실질 수익률 계산 |
+```bash
+pip install yfinance
+python collect.py          # → data/ 폴더에 JSON 생성
+npm install && npm run dev # → http://localhost:3000
+```
+
+외부 API 키, 환경변수, 별도 계정 등록 일체 불필요.
