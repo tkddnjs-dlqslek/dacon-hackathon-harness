@@ -22,7 +22,7 @@
 
 ### Phase 2: 핵심 구현
 - [x] Next.js 프로젝트 scaffolding
-- [ ] 데이터 수집 스크립트 (yfinance → JSON)
+- [x] 데이터 수집 스크립트 (yfinance → JSON)
 - [ ] 분석 엔진 구현 (skills/data-analysis.md 기반)
 - [ ] 차트 컴포넌트 구현 (skills/visualization.md 기반)
 - [ ] 인사이트 자동 생성 로직 (skills/insight-generation.md 기반)
@@ -43,7 +43,7 @@
 ---
 
 ## In Progress
-- [ ] 데이터 수집 스크립트 (yfinance → JSON)
+- [ ] 분석 엔진 구현 (skills/data-analysis.md 기반)
 
 ## Done
 
@@ -58,3 +58,4 @@
 
 ### Phase 2
 - [x] Next.js 프로젝트 scaffolding — 4페이지 + lib 3개 + types, TypeScript 통과 (2026-04-11)
+- [x] 데이터 수집 스크립트 — collect.py, 12 ETF + 55 종목 + 메타데이터 + ^IRX, 총 6MB (2026-04-11)
