@@ -6,12 +6,12 @@ import {
   computeMetricsWithBenchmark,
   dailyReturns,
   correlationMatrix,
-  filterByPeriod,
   cumulativeReturns,
 } from "@/lib/analysis-engine";
 import { topInsights, generateETFInsights, generateSectorInsights } from "@/lib/insight-generator";
-import type { ETFMetrics, PeriodLabel } from "@/types";
+import type { ETFMetrics } from "@/types";
 import { SECTOR_COLORS } from "@/types";
+import { CumulativeReturnChart, SectorBarChart, SectorDonutChart } from "@/components/charts";
 
 export default async function DashboardPage() {
   const [etfPrices, metadata, riskFreeRate] = await Promise.all([
@@ -57,6 +57,20 @@ export default async function DashboardPage() {
       return1Y: allMetrics[i].returnPeriod["1Y"],
     }))
     .sort((a, b) => b.return1Y - a.return1Y);
+
+  // 누적 수익률 차트 데이터
+  const chartDates = sectorETFs[0].data.map((d) => d.date);
+  const chartSeries = sectorETFs.map((etf) => ({
+    ticker: etf.ticker,
+    sector: etf.sector,
+    cumulativeReturns: cumulativeReturns(etf.data),
+  }));
+
+  // 섹터 비중 (균등 배분)
+  const sectorWeights = sectorETFs.map((etf) => ({
+    sector: etf.sector,
+    weight: 1 / sectorETFs.length,
+  }));
 
   const insightColors: Record<string, string> = {
     danger: "border-red-800 bg-red-950 text-red-300",
@@ -105,15 +119,7 @@ export default async function DashboardPage() {
         </section>
         <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
           <h2 className="mb-3 text-sm font-semibold text-gray-400">Sector Allocation</h2>
-          <div className="space-y-2">
-            {metadata.map((m) => (
-              <div key={m.ticker} className="flex items-center gap-2 text-sm">
-                <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: SECTOR_COLORS[m.sector] ?? "#94A3B8" }} />
-                <span className="w-32 text-gray-300">{m.sector}</span>
-                <span className="text-gray-500">{m.ticker}</span>
-              </div>
-            ))}
-          </div>
+          <SectorDonutChart data={sectorWeights} />
         </section>
       </div>
 
@@ -121,23 +127,10 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
           <h2 className="mb-3 font-semibold">Sector Return Ranking (1Y)</h2>
-          <div className="space-y-2">
-            {sectorReturns.map((s) => (
-              <div key={s.ticker} className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: SECTOR_COLORS[s.sector] ?? "#94A3B8" }} />
-                <span className="w-36 text-sm text-gray-300">{s.sector}</span>
-                <div className="flex-1">
-                  <div
-                    className={`h-5 rounded ${s.return1Y >= 0 ? "bg-green-600" : "bg-red-600"}`}
-                    style={{ width: `${Math.min(Math.abs(s.return1Y * 100) * 2, 100)}%` }}
-                  />
-                </div>
-                <span className={`w-16 text-right text-sm font-mono ${s.return1Y >= 0 ? "text-green-400" : "text-red-400"}`}>
-                  {(s.return1Y * 100).toFixed(1)}%
-                </span>
-              </div>
-            ))}
-          </div>
+          <SectorBarChart
+            data={sectorReturns.map((s) => ({ sector: s.sector, ticker: s.ticker, value: s.return1Y }))}
+            label="1Y Return"
+          />
         </section>
 
         <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
@@ -216,10 +209,10 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      {/* D & H placeholder — 차트 컴포넌트 구현 시 교체 */}
+      {/* D. 포트폴리오 누적 수익률 */}
       <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-        <h2 className="mb-3 font-semibold">Cumulative Returns & Rebalance Simulator</h2>
-        <p className="text-sm text-gray-500">Chart components will be wired in the next phase.</p>
+        <h2 className="mb-3 font-semibold">Cumulative Returns (All ETFs)</h2>
+        <CumulativeReturnChart dates={chartDates} series={chartSeries} />
       </section>
     </div>
   );
