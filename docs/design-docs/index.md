@@ -5,6 +5,6 @@
 ## 문서 목록
 | 문서 | 상태 | 설명 |
 |------|------|------|
-| dashboard-layout.md | TODO | 대시보드 UI 레이아웃 상세 설계 |
+| dashboard-layout.md | ✅ v1 | 4개 페이지 와이어프레임 + 컴포넌트 매핑 + 인터랙션 흐름 |
 | data-pipeline.md | TODO | 데이터 수집/가공 파이프라인 설계 |
 | chart-selection.md | TODO | 차트 자동 선택 엔진 상세 설계 |
