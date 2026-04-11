@@ -1,6 +1,6 @@
 # Plans
 
-## Current Phase: Phase 1 — 기획 & 설계
+## Current Phase: Phase 2 — 핵심 구현
 
 ## Phases Overview
 | Phase | 내용 | 기한 |
@@ -18,7 +18,7 @@
 - [x] 섹터별 대표 ETF 목록 정의
 - [x] Skills.md 초안 작성 (data-analysis, visualization, insight-generation)
 - [x] 대시보드 와이어프레임 설계
-- [ ] 기획서 초안 작성
+- [x] 기획서 초안 작성
 
 ### Phase 2: 핵심 구현
 - [ ] Next.js 프로젝트 scaffolding
@@ -43,12 +43,15 @@
 ---
 
 ## In Progress
-- [ ] 기획서 초안 작성
+- [ ] Next.js 프로젝트 scaffolding
 
 ## Done
+
+### Phase 1 ✅
 - [x] Harness 구조 설계
 - [x] 기술 스택 확정 (Next.js + Recharts + Vercel)
 - [x] 데이터 소스 조사 & 확정 — yfinance 단독, API 키 제로 정책 (2026-04-11)
 - [x] 섹터별 대표 ETF 목록 정의 — SPDR 11개 섹터 + SPY 벤치마크 + 개별종목 Top5 확정 (2026-04-11)
 - [x] Skills.md 초안 작성 — 5개 파일 완성, 데이터 소스 정합성 보완 (2026-04-11)
 - [x] 대시보드 와이어프레임 설계 — 4페이지 상세 레이아웃 + 컴포넌트 매핑 + 인터랙션 흐름 (2026-04-11)
+- [x] 기획서 초안 작성 — 8개 섹션, deliverables/proposal-draft.md (2026-04-11)
