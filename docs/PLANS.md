@@ -27,9 +27,9 @@
 - [x] 차트 컴포넌트 구현 (skills/visualization.md 기반)
 - [x] 인사이트 자동 생성 로직 (skills/insight-generation.md 기반)
 - [x] 포트폴리오 구성 & 리밸런싱 시뮬레이션
-- [ ] ETF vs 직접투자 비교 엔진 (skills/data-analysis.md §4 기반)
-- [ ] ETF vs 직접투자 비교 페이지 (/compare)
-- [ ] 개별종목 데이터 수집 (섹터별 상위 N개)
+- [x] ETF vs 직접투자 비교 엔진 (skills/data-analysis.md §4 기반)
+- [x] ETF vs 직접투자 비교 페이지 (/compare)
+- [x] 개별종목 데이터 수집 (섹터별 상위 N개)
 - [ ] Skills.md v2 — 테스트 후 갭 보완
 
 ### Phase 3: 완성 & 배포
@@ -43,7 +43,7 @@
 ---
 
 ## In Progress
-- [ ] ETF vs 직접투자 비교 엔진 (skills/data-analysis.md §4 기반)
+- [ ] Skills.md v2 — 테스트 후 갭 보완
 
 ## Done
 
@@ -63,3 +63,4 @@
 - [x] 차트 컴포넌트 구현 — Recharts 5종(CumulativeReturn, SectorBar, SectorDonut, DualLine, GroupedBar) + 메인 페이지 연결 (2026-04-11)
 - [x] 인사이트 자동 생성 — §2~§5 전체 구현, 메인+섹터 페이지 실데이터 연결, 섹터 상세 페이지 풀 리빌드 (2026-04-11)
 - [x] 포트폴리오 구성 & 리밸런싱 — 인터랙티브 슬라이더(11 ETF) + 백테스트(vs SPY) + 리밸런싱 5단계 비교, DualLine 차트 연결 (2026-04-11)
+- [x] ETF vs 직접투자 비교 + /compare 페이지 + 개별종목 연결 — 11 섹터 선택, Top 3/5/10, 리밸런싱 3단계, 1Y/2Y, KPI+DualLine+GroupedBar+Holdings 테이블 (2026-04-12)
