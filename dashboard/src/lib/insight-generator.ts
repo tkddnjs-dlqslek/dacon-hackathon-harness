@@ -105,6 +105,55 @@ export function generateSectorInsights(
   return insights;
 }
 
+// §5 ETF vs 직접투자 비교 인사이트
+export function generateCompareInsights(
+  sector: string,
+  etfTicker: string,
+  n: number,
+  etfReturn: number,
+  directReturn: number,
+  etfCost: number,
+  directCost: number,
+  etfVol: number,
+  directVol: number,
+  etfMdd: number,
+  directMdd: number
+): Insight[] {
+  const insights: Insight[] = [];
+  const diffPct = (etfReturn - directReturn) * 100;
+  const absDiff = Math.abs(diffPct);
+
+  // 수익률 비교
+  if (diffPct > 3) {
+    insights.push({ level: "success", message: `${sector} 섹터는 ETF(${etfTicker})가 개별종목 직접투자 대비 ${absDiff.toFixed(1)}%p 높은 수익률을 기록했습니다. ETF의 분산 효과가 유효합니다.` });
+  } else if (diffPct < -5) {
+    insights.push({ level: "info", message: `${sector} 섹터는 상위 ${n}개 종목 직접투자가 ETF 대비 ${absDiff.toFixed(1)}%p 높은 수익률을 보였습니다. 다만 집중 리스크에 유의하세요.` });
+  } else if (absDiff < 1) {
+    insights.push({ level: "info", message: `${sector} 섹터의 ETF와 직접투자 수익률 차이가 ${absDiff.toFixed(1)}%p로 미미합니다. 편의성과 비용을 고려해 선택하세요.` });
+  }
+
+  // 비용 비교
+  if (etfCost > directCost * 2) {
+    insights.push({ level: "warning", message: `${etfTicker}의 누적 보수($${etfCost.toFixed(0)})가 직접투자 거래비용($${directCost.toFixed(0)})의 2배를 초과합니다. 장기 보유 시 비용 부담에 유의하세요.` });
+  } else if (directCost > etfCost) {
+    insights.push({ level: "success", message: `리밸런싱 시 직접투자 거래비용이 ETF 보수를 초과합니다. ETF가 비용 효율적입니다.` });
+  }
+
+  // 변동성 비교
+  const volRatio = directVol / (etfVol || 1);
+  if (volRatio > 1.3) {
+    insights.push({ level: "warning", message: `${sector} 섹터 직접투자 포트폴리오의 변동성이 ETF 대비 ${volRatio.toFixed(1)}배 높습니다. 종목 수가 적어 분산이 부족합니다.` });
+  }
+
+  // MDD 비교
+  const mddDiff = (Math.abs(directMdd) - Math.abs(etfMdd)) * 100;
+  if (mddDiff > 10) {
+    insights.push({ level: "danger", message: `직접투자의 최대 낙폭(${(directMdd * 100).toFixed(1)}%)이 ETF(${(etfMdd * 100).toFixed(1)}%)보다 ${mddDiff.toFixed(1)}%p 크며, 하방 리스크가 높습니다.` });
+  }
+
+  return insights;
+}
+
 // §6 인사이트 정렬 (우선순위)
 const LEVEL_PRIORITY: Record<InsightLevel, number> = {
   danger: 0,

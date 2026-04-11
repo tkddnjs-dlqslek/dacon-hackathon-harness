@@ -25,7 +25,7 @@
 - [x] 데이터 수집 스크립트 (yfinance → JSON)
 - [x] 분석 엔진 구현 (skills/data-analysis.md 기반)
 - [x] 차트 컴포넌트 구현 (skills/visualization.md 기반)
-- [ ] 인사이트 자동 생성 로직 (skills/insight-generation.md 기반)
+- [x] 인사이트 자동 생성 로직 (skills/insight-generation.md 기반)
 - [ ] 포트폴리오 구성 & 리밸런싱 시뮬레이션
 - [ ] ETF vs 직접투자 비교 엔진 (skills/data-analysis.md §4 기반)
 - [ ] ETF vs 직접투자 비교 페이지 (/compare)
@@ -43,7 +43,7 @@
 ---
 
 ## In Progress
-- [ ] 인사이트 자동 생성 로직 (skills/insight-generation.md 기반)
+- [ ] 포트폴리오 구성 & 리밸런싱 시뮬레이션
 
 ## Done
 
@@ -61,3 +61,4 @@
 - [x] 데이터 수집 스크립트 — collect.py, 12 ETF + 55 종목 + 메타데이터 + ^IRX, 총 6MB (2026-04-11)
 - [x] 분석 엔진 구현 — §1~§4 전체: 결측치/베타/상관행렬/공분산/리밸런싱/ETF vs 직접투자 + 메인 페이지 실데이터 연결, 빌드 통과 (2026-04-11)
 - [x] 차트 컴포넌트 구현 — Recharts 5종(CumulativeReturn, SectorBar, SectorDonut, DualLine, GroupedBar) + 메인 페이지 연결 (2026-04-11)
+- [x] 인사이트 자동 생성 — §2~§5 전체 구현, 메인+섹터 페이지 실데이터 연결, 섹터 상세 페이지 풀 리빌드 (2026-04-11)
