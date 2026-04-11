@@ -54,15 +54,19 @@ function selectChart(data):
 ## §2. 스타일 규칙
 
 ### 2.1 색상 팔레트
-- **섹터 색상**: 섹터별 고정 색상 할당 (일관성 유지)
+- **섹터 색상**: 11개 GICS 섹터별 고정 색상 할당 (일관성 유지)
   - Technology: `#3B82F6` (blue)
   - Energy: `#F59E0B` (amber)
   - Healthcare: `#10B981` (emerald)
-  - Finance: `#8B5CF6` (violet)
-  - Consumer: `#EC4899` (pink)
-  - Industrial: `#6B7280` (gray)
+  - Financials: `#8B5CF6` (violet)
+  - Consumer Disc.: `#EC4899` (pink)
+  - Industrials: `#6B7280` (gray)
   - Real Estate: `#F97316` (orange)
-  - 기타: `#94A3B8` (slate)
+  - Utilities: `#06B6D4` (cyan)
+  - Consumer Staples: `#84CC16` (lime)
+  - Materials: `#A855F7` (purple)
+  - Communication: `#F43F5E` (rose)
+  - 기타/미분류: `#94A3B8` (slate)
 - **수익률**: 양수 `#10B981`, 음수 `#EF4444`
 - **배경**: 다크모드 `#0F172A`, 라이트모드 `#FFFFFF`
 

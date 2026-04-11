@@ -4,6 +4,13 @@
 이 문서는 섹터별 ETF 포트폴리오 분석 대시보드의 분석 규칙, 시각화 기준, 인사이트 생성 규칙을 정의한다.
 모든 대시보드 로직은 이 Skills 문서를 근거로 구현된다.
 
+## 데이터 소스
+- **유일한 외부 의존**: yfinance (API 키 불필요, `pip install yfinance`)
+- **ETF**: SPDR Select Sector 11종 (XLK, XLE, XLV, XLF, XLY, XLI, XLRE, XLU, XLP, XLB, XLC) + SPY 벤치마크
+- **개별종목**: 각 ETF의 `funds_data.top_holdings` 상위 5종목
+- **무위험수익률**: `^IRX` (13-Week T-Bill Rate)
+- **fallback**: `data/` 폴더 정적 JSON — yfinance 장애 시 대시보드 동작 보장
+
 ## Skills 문서 구조
 
 | 파일 | 역할 |
