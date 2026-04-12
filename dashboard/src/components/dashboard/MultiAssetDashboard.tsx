@@ -4,6 +4,8 @@ import { useState, useMemo } from "react";
 import { CumulativeReturnChart } from "@/components/charts";
 import type { Asset, OHLCV, AssetType, Insight, UniverseAsset } from "@/types";
 import { ASSET_CLASS_COLORS, ASSET_CLASS_LABELS, T } from "@/types";
+import { useSort } from "@/lib/use-sort";
+import { SortIndicator } from "@/components/ui/SortIndicator";
 
 interface Props {
   assets: Asset[];
@@ -66,6 +68,72 @@ const insightLabels: Record<string, string> = {
   success: T.good,
   info: T.info,
 };
+
+// 정렬 가능 전체 자산 테이블
+type SortColumn = "ticker" | "name" | "ret" | "vol" | "mdd";
+
+function SortableAllAssetsTable({
+  filtered,
+  periodLabel,
+}: {
+  filtered: (Asset & { sliced: OHLCV[] })[];
+  periodLabel: string;
+}) {
+  const rows = filtered.map((a) => ({
+    ticker: a.ticker,
+    name: a.name,
+    assetType: a.assetType,
+    ...calcMetrics(a.sliced),
+  }));
+
+  const { sortedData, sort, handleSort } = useSort<(typeof rows)[number], SortColumn>(rows, "ret", "desc");
+
+  const sortHeader = (label: string, col: SortColumn, align: "left" | "right" = "left") => (
+    <th
+      onClick={() => handleSort(col)}
+      className={`pb-2 cursor-pointer hover:text-white ${align === "right" ? "text-right" : ""}`}
+    >
+      {label} <SortIndicator active={sort.column === col} direction={sort.direction} />
+    </th>
+  );
+
+  return (
+    <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+      <h2 className="mb-3 font-semibold">{T.allAssets} ({rows.length}개) <span className="ml-2 text-xs text-gray-500">컬럼 클릭하여 정렬</span></h2>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-sm">
+          <thead className="border-b border-gray-700 text-xs text-gray-400">
+            <tr>
+              <th className="pb-2">{T.class}</th>
+              {sortHeader(T.ticker, "ticker")}
+              {sortHeader(T.name, "name")}
+              {sortHeader(`${periodLabel} ${T.return}`, "ret", "right")}
+              {sortHeader(T.volatility, "vol", "right")}
+              {sortHeader(T.mdd, "mdd", "right")}
+            </tr>
+          </thead>
+          <tbody>
+            {sortedData.map((a) => (
+              <tr key={a.ticker} className="border-b border-gray-800">
+                <td className="py-2">
+                  <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: ASSET_CLASS_COLORS[a.assetType] }} />
+                  {" "}<span className="text-xs text-gray-500">{ASSET_CLASS_LABELS[a.assetType]}</span>
+                </td>
+                <td className="py-2 font-mono font-bold">{a.ticker}</td>
+                <td className="py-2 text-gray-400">{a.name}</td>
+                <td className={`py-2 text-right font-mono ${a.ret >= 0 ? "text-green-400" : "text-red-400"}`}>
+                  {(a.ret * 100).toFixed(1)}%
+                </td>
+                <td className="py-2 text-right font-mono text-gray-300">{(a.vol * 100).toFixed(1)}%</td>
+                <td className="py-2 text-right font-mono text-red-400">{(a.mdd * 100).toFixed(1)}%</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
 
 export default function MultiAssetDashboard({ assets, universe, insights }: Props) {
   const [periodIdx, setPeriodIdx] = useState(3); // 1Y
@@ -304,44 +372,8 @@ export default function MultiAssetDashboard({ assets, universe, insights }: Prop
         </p>
       </section>
 
-      {/* 전체 자산 테이블 */}
-      <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-        <h2 className="mb-3 font-semibold">{T.allAssets} ({totalAssets}개)</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-gray-700 text-xs text-gray-400">
-              <tr>
-                <th className="pb-2">{T.class}</th>
-                <th className="pb-2">{T.ticker}</th>
-                <th className="pb-2">{T.name}</th>
-                <th className="pb-2 text-right">{period.label} {T.return}</th>
-                <th className="pb-2 text-right">{T.volatility}</th>
-                <th className="pb-2 text-right">{T.mdd}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered
-                .map((a) => ({ ...a, m: calcMetrics(a.sliced) }))
-                .sort((a, b) => b.m.ret - a.m.ret)
-                .map((a) => (
-                  <tr key={a.ticker} className="border-b border-gray-800">
-                    <td className="py-2">
-                      <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: ASSET_CLASS_COLORS[a.assetType] }} />
-                      {" "}<span className="text-xs text-gray-500">{ASSET_CLASS_LABELS[a.assetType]}</span>
-                    </td>
-                    <td className="py-2 font-mono font-bold">{a.ticker}</td>
-                    <td className="py-2 text-gray-400">{a.name}</td>
-                    <td className={`py-2 text-right font-mono ${a.m.ret >= 0 ? "text-green-400" : "text-red-400"}`}>
-                      {(a.m.ret * 100).toFixed(1)}%
-                    </td>
-                    <td className="py-2 text-right font-mono text-gray-300">{(a.m.vol * 100).toFixed(1)}%</td>
-                    <td className="py-2 text-right font-mono text-red-400">{(a.m.mdd * 100).toFixed(1)}%</td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      {/* 전체 자산 테이블 (정렬 가능) */}
+      <SortableAllAssetsTable filtered={filtered} periodLabel={period.label} />
 
       {/* S&P 500 유니버스 — 검색 가능한 대형 테이블 */}
       <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">

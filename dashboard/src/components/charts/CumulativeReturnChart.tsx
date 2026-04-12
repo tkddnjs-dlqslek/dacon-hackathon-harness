@@ -46,8 +46,14 @@ export default function CumulativeReturnChart({ dates, series }: Props) {
         />
         <Tooltip
           contentStyle={{ backgroundColor: "#111827", border: "1px solid #374151", borderRadius: 8 }}
-          labelStyle={{ color: "#9ca3af" }}
-          formatter={(value, name) => [`${Number(value).toFixed(1)}%`, name]}
+          labelStyle={{ color: "#9ca3af", fontSize: 12, marginBottom: 4 }}
+          itemStyle={{ fontSize: 11, padding: "2px 0" }}
+          formatter={(value, name) => {
+            const v = Number(value);
+            const sign = v >= 0 ? "+" : "";
+            return [`${sign}${v.toFixed(2)}%`, name];
+          }}
+          labelFormatter={(label) => `📅 ${label}`}
         />
         <Legend wrapperStyle={{ fontSize: 11 }} />
         {series.map((s) => (

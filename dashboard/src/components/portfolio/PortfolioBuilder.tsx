@@ -2,7 +2,8 @@
 
 // 포트폴리오 비중 조정 + 백테스트 + 리밸런싱 — 인터랙티브 클라이언트 컴포넌트
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { DualLineChart } from "@/components/charts";
 import type { OHLCV } from "@/types";
 import { SECTOR_COLORS } from "@/types";
@@ -27,10 +28,66 @@ const RB_OPTIONS = [
   { label: "연간", days: 252 },
 ];
 
+// URL ↔ 비중 인코딩
+function encodeWeights(weights: number[]): string {
+  return weights.map((w) => Math.round(w * 1000)).join(",");
+}
+function decodeWeights(s: string, n: number): number[] | null {
+  const parts = s.split(",").map(Number);
+  if (parts.length !== n || parts.some(isNaN)) return null;
+  const sum = parts.reduce((a, b) => a + b, 0);
+  if (sum === 0) return null;
+  return parts.map((p) => p / sum); // 정규화
+}
+
 export default function PortfolioBuilder({ etfs, spyData, riskFreeRate }: Props) {
   const n = etfs.length;
-  const [weights, setWeights] = useState<number[]>(Array(n).fill(1 / n));
-  const [rbIndex, setRbIndex] = useState(2); // quarterly default
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // URL에서 비중 복원 (있으면 사용, 없으면 균등 배분)
+  const initialWeights = useMemo(() => {
+    const w = searchParams.get("w");
+    if (w) {
+      const decoded = decodeWeights(w, n);
+      if (decoded) return decoded;
+    }
+    return Array(n).fill(1 / n);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const initialRb = useMemo(() => {
+    const rb = searchParams.get("rb");
+    return rb ? Math.max(0, Math.min(4, Number(rb))) : 2;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const [weights, setWeights] = useState<number[]>(initialWeights);
+  const [rbIndex, setRbIndex] = useState(initialRb);
+  const [shareToast, setShareToast] = useState(false);
+
+  // 비중 변경 시 URL 업데이트 (replaceState — 히스토리 안 쌓음)
+  useEffect(() => {
+    const params = new URLSearchParams();
+    params.set("w", encodeWeights(weights));
+    params.set("rb", String(rbIndex));
+    window.history.replaceState({}, "", `${pathname}?${params.toString()}`);
+  }, [weights, rbIndex, pathname]);
+
+  const handleShare = async () => {
+    const params = new URLSearchParams();
+    params.set("w", encodeWeights(weights));
+    params.set("rb", String(rbIndex));
+    const url = `${window.location.origin}${pathname}?${params.toString()}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareToast(true);
+      setTimeout(() => setShareToast(false), 2500);
+    } catch {
+      window.prompt("아래 URL을 복사하세요", url);
+    }
+  };
 
   const setWeight = (idx: number, val: number) => {
     const newW = [...weights];
@@ -119,13 +176,23 @@ export default function PortfolioBuilder({ etfs, spyData, riskFreeRate }: Props)
   return (
     <div className="space-y-6">
       {/* A. 비중 조정 슬라이더 */}
-      <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+      <section className="relative rounded-lg border border-gray-800 bg-gray-900 p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="font-semibold">ETF 비중</h2>
-          <button onClick={equalWeight} className="rounded bg-gray-800 px-3 py-1 text-xs text-gray-300 hover:text-white">
-            균등 배분
-          </button>
+          <div className="flex gap-2">
+            <button onClick={equalWeight} className="rounded bg-gray-800 px-3 py-1 text-xs text-gray-300 hover:text-white">
+              균등 배분
+            </button>
+            <button onClick={handleShare} className="rounded bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-500">
+              🔗 링크 공유
+            </button>
+          </div>
         </div>
+        {shareToast && (
+          <div className="absolute right-4 top-12 z-10 rounded bg-green-700 px-3 py-1 text-xs text-white shadow-lg">
+            URL이 클립보드에 복사되었습니다
+          </div>
+        )}
         <div className="space-y-2">
           {etfs.map((etf, i) => (
             <div key={etf.ticker} className="flex items-center gap-3">

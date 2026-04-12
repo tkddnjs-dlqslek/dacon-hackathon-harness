@@ -104,6 +104,12 @@ export default function Header() {
           <Link href="/multi-compare" className={`rounded-md px-3 py-1.5 text-sm transition-colors ${pathname === "/multi-compare" ? "bg-gray-800 text-white" : "text-gray-400 hover:text-white"}`}>
             자산 비교
           </Link>
+          <Link href="/report" className={`rounded-md px-3 py-1.5 text-sm transition-colors ${pathname === "/report" ? "bg-gray-800 text-white" : "text-gray-400 hover:text-white"}`}>
+            📊 리포트
+          </Link>
+          <Link href="/ask" className={`rounded-md px-3 py-1.5 text-sm transition-colors ${pathname === "/ask" ? "bg-gray-800 text-white" : "text-gray-400 hover:text-white"}`}>
+            💬 질문
+          </Link>
           <Link href="/search" className={`rounded-md px-3 py-1.5 text-sm transition-colors ${pathname === "/search" ? "bg-gray-800 text-white" : "text-gray-400 hover:text-white"}`}>
             🔍 검색
           </Link>
