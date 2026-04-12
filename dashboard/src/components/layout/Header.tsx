@@ -42,6 +42,9 @@ export default function Header() {
           멀티 에셋 투자 분석
         </Link>
         <nav className="flex flex-wrap items-center gap-1">
+          <Link href="/demo" className={`rounded-md px-3 py-1.5 text-sm transition-colors ${pathname === "/demo" ? "bg-purple-700 text-white" : "text-purple-400 hover:text-white"}`}>
+            🎯 둘러보기
+          </Link>
           <Link href="/" className={`rounded-md px-3 py-1.5 text-sm transition-colors ${pathname === "/" ? "bg-gray-800 text-white" : "text-gray-400 hover:text-white"}`}>
             대시보드
           </Link>
@@ -103,6 +106,9 @@ export default function Header() {
           </Link>
           <Link href="/multi-compare" className={`rounded-md px-3 py-1.5 text-sm transition-colors ${pathname === "/multi-compare" ? "bg-gray-800 text-white" : "text-gray-400 hover:text-white"}`}>
             자산 비교
+          </Link>
+          <Link href="/fundamentals" className={`rounded-md px-3 py-1.5 text-sm transition-colors ${pathname === "/fundamentals" ? "bg-gray-800 text-white" : "text-gray-400 hover:text-white"}`}>
+            💰 재무제표
           </Link>
           <Link href="/report" className={`rounded-md px-3 py-1.5 text-sm transition-colors ${pathname === "/report" ? "bg-gray-800 text-white" : "text-gray-400 hover:text-white"}`}>
             📊 리포트

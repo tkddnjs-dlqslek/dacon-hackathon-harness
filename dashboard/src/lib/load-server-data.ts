@@ -2,7 +2,7 @@
 
 import { readFile } from "fs/promises";
 import path from "path";
-import type { Asset, ETFMetadata, AssetType, UniverseAsset } from "@/types";
+import type { Asset, ETFMetadata, AssetType, UniverseAsset, FundamentalAsset } from "@/types";
 
 const DATA_DIR = path.join(process.cwd(), "public", "data");
 
@@ -30,6 +30,10 @@ export async function loadETFMetadata(): Promise<ETFMetadata[]> {
 
 export async function loadUniverse(): Promise<UniverseAsset[]> {
   return readJSON<UniverseAsset[]>("universe.json");
+}
+
+export async function loadFundamentals(): Promise<FundamentalAsset[]> {
+  return readJSON<FundamentalAsset[]>("fundamentals.json");
 }
 
 export async function loadRiskFreeRate(): Promise<number> {

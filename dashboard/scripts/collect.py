@@ -407,7 +407,69 @@ def collect_holdings_stocks(metadata):
     save_json(result, "stocks.json")
 
 
-# ── 5. 메타 ──────────────────────────────────────────
+# ── 5. 재무제표 데이터 (Fundamentals) ────────────────
+
+def collect_fundamentals():
+    """
+    재무제표 단면(snapshot) 데이터 수집
+    - PER, PBR, ROE, EPS, 시가총액, 배당수익률, 부채비율
+    - S&P 500 + 인기 ETF + 한국 시총 톱20
+
+    데이터 구조: 시계열이 아닌 단일 시점 스냅샷
+    -> data-schema.md "다른 형식의 데이터" 처리 데모
+    """
+    print("\n[+] Fundamentals (재무제표 단면 데이터)...")
+
+    sp500 = get_sp500_tickers()
+    korean = list(KOREAN_STOCKS.keys())
+    targets = sorted(set(sp500 + korean))
+
+    results = []
+    success = 0
+    for i, ticker in enumerate(targets):
+        if i % 50 == 0:
+            print(f"  진행: {i}/{len(targets)}")
+        try:
+            tk = yf.Ticker(ticker)
+            info = tk.info
+            if not info or info.get("trailingPE") is None and info.get("marketCap") is None:
+                continue
+
+            results.append({
+                "ticker": ticker,
+                "name": info.get("shortName") or info.get("longName") or ticker,
+                "sector": info.get("sector") or "Unknown",
+                "industry": info.get("industry") or "Unknown",
+                "currency": info.get("currency") or "USD",
+                "marketCap": info.get("marketCap"),
+                "trailingPE": info.get("trailingPE"),
+                "forwardPE": info.get("forwardPE"),
+                "priceToBook": info.get("priceToBook"),
+                "returnOnEquity": info.get("returnOnEquity"),
+                "trailingEps": info.get("trailingEps"),
+                "forwardEps": info.get("forwardEps"),
+                "dividendYield": info.get("dividendYield"),
+                "debtToEquity": info.get("debtToEquity"),
+                "profitMargins": info.get("profitMargins"),
+                "operatingMargins": info.get("operatingMargins"),
+                "revenueGrowth": info.get("revenueGrowth"),
+                "earningsGrowth": info.get("earningsGrowth"),
+                "currentPrice": info.get("currentPrice") or info.get("regularMarketPrice"),
+                "fiftyTwoWeekHigh": info.get("fiftyTwoWeekHigh"),
+                "fiftyTwoWeekLow": info.get("fiftyTwoWeekLow"),
+                "beta": info.get("beta"),
+                "country": info.get("country"),
+            })
+            success += 1
+        except Exception:
+            continue
+
+    print(f"  collected: {success}/{len(targets)} fundamentals")
+    save_json_compact(results, "fundamentals.json")
+    return results
+
+
+# ── 6. 메타 ──────────────────────────────────────────
 
 def save_meta(detail_count, universe_count):
     print("\n[5/5] Metadata...")
@@ -446,7 +508,9 @@ def main():
     metadata = collect_etf_metadata(detail)
     universe = collect_universe()
     collect_holdings_stocks(metadata)
+    fundamentals = collect_fundamentals()
     save_meta(len(detail), len(universe))
+    print(f"  fundamentals: {len(fundamentals)}")
 
     print("\n" + "=" * 60)
     print(f"Done! detail={len(detail)} universe={len(universe)} total={len(detail) + len(universe)}")

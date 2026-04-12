@@ -41,6 +41,34 @@ export interface AssetMetrics {
 
 export type PeriodLabel = "1M" | "3M" | "6M" | "1Y" | "YTD" | "ALL";
 
+// Fundamentals — 재무제표 단면 데이터 (시계열 아님!)
+// data-schema.md "다른 형식의 데이터" 처리 데모
+export interface FundamentalAsset {
+  ticker: string;
+  name: string;
+  sector: string;
+  industry: string;
+  currency: string;
+  marketCap: number | null;
+  trailingPE: number | null;
+  forwardPE: number | null;
+  priceToBook: number | null;
+  returnOnEquity: number | null;
+  trailingEps: number | null;
+  forwardEps: number | null;
+  dividendYield: number | null;
+  debtToEquity: number | null;
+  profitMargins: number | null;
+  operatingMargins: number | null;
+  revenueGrowth: number | null;
+  earningsGrowth: number | null;
+  currentPrice: number | null;
+  fiftyTwoWeekHigh: number | null;
+  fiftyTwoWeekLow: number | null;
+  beta: number | null;
+  country: string | null;
+}
+
 // Universe tier — 사전 계산 지표만 (S&P 500 등 대량 자산용)
 export interface UniverseAsset {
   ticker: string;
