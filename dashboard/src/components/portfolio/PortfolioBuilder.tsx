@@ -4,18 +4,18 @@
 
 import { useState, useMemo } from "react";
 import { DualLineChart } from "@/components/charts";
-import type { OHLCVData } from "@/types";
+import type { OHLCV } from "@/types";
 import { SECTOR_COLORS } from "@/types";
 
 interface ETFInput {
   ticker: string;
   sector: string;
-  data: OHLCVData[];
+  data: OHLCV[];
 }
 
 interface Props {
   etfs: ETFInput[];
-  spyData: OHLCVData[];
+  spyData: OHLCV[];
   riskFreeRate: number;
 }
 

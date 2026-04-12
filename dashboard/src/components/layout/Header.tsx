@@ -28,7 +28,7 @@ export default function Header() {
     <header className="border-b border-gray-800 bg-gray-950 px-6 py-3">
       <div className="mx-auto flex max-w-7xl items-center justify-between">
         <Link href="/" className="text-lg font-bold text-white">
-          Sector ETF Dashboard
+          Multi-Asset Investment Analytics
         </Link>
         <nav className="flex items-center gap-1">
           <Link href="/" className={`rounded-md px-3 py-1.5 text-sm transition-colors ${pathname === "/" ? "bg-gray-800 text-white" : "text-gray-400 hover:text-white"}`}>

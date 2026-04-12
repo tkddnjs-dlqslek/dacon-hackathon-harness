@@ -4,11 +4,11 @@
 
 import { useState, useMemo } from "react";
 import { DualLineChart, GroupedBarChart } from "@/components/charts";
-import type { OHLCVData, ETFMetadata } from "@/types";
+import type { OHLCV, ETFMetadata } from "@/types";
 import { SECTOR_COLORS } from "@/types";
 
 interface Props {
-  sectors: { sector: string; etfTicker: string; etfData: OHLCVData[]; stocks: { ticker: string; data: OHLCVData[] }[] }[];
+  sectors: { sector: string; etfTicker: string; etfData: OHLCV[]; stocks: { ticker: string; data: OHLCV[] }[] }[];
   metadata: ETFMetadata[];
   riskFreeRate: number;
 }

@@ -1,9 +1,9 @@
 // 인사이트 자동 생성 — skills/insight-generation.md 규칙 구현
 
-import type { ETFMetrics, Insight, InsightLevel } from "@/types";
+import type { AssetMetrics, Insight, InsightLevel } from "@/types";
 
 // §2 개별 ETF 인사이트
-export function generateETFInsights(metrics: ETFMetrics): Insight[] {
+export function generateETFInsights(metrics: AssetMetrics): Insight[] {
   const insights: Insight[] = [];
   const t = metrics.ticker;
 

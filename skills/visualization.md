@@ -53,6 +53,20 @@ function selectChart(data):
 ## §2. 스타일 규칙
 
 ### 2.1 색상 팔레트
+
+#### 자산 클래스 색상 (NEW v3)
+6개 자산 클래스 간 일관성 유지:
+
+| 자산 클래스 | 색상 | HEX |
+|-----------|------|-----|
+| equity_etf | 파랑 | `#3B82F6` |
+| bond | 청록 | `#06B6D4` |
+| fx | 보라 | `#8B5CF6` |
+| commodity | 호박 | `#F59E0B` |
+| crypto | 주황 | `#F97316` |
+| index | 회색 | `#6B7280` |
+
+#### 섹터 색상 (equity_etf 내부)
 - **섹터 색상**: 11개 GICS 섹터별 고정 색상 할당 (일관성 유지)
   - Technology: `#3B82F6` (blue)
   - Energy: `#F59E0B` (amber)

@@ -1,8 +1,8 @@
-// 서버 사이드 데이터 로딩 — JSON 파일 직접 읽기 (API Route 불필요)
+// 서버 사이드 데이터 로딩 — 통일 스키마 (v3)
 
 import { readFile } from "fs/promises";
 import path from "path";
-import type { ETFTimeSeries, ETFMetadata } from "@/types";
+import type { Asset, ETFMetadata, AssetType } from "@/types";
 
 const DATA_DIR = path.join(process.cwd(), "public", "data");
 
@@ -11,12 +11,17 @@ async function readJSON<T>(filename: string): Promise<T> {
   return JSON.parse(raw);
 }
 
-export async function loadETFPrices(): Promise<ETFTimeSeries[]> {
-  return readJSON<ETFTimeSeries[]>("etf-prices.json");
+export async function loadAllAssets(): Promise<Asset[]> {
+  return readJSON<Asset[]>("assets.json");
 }
 
-export async function loadStockPrices(): Promise<ETFTimeSeries[]> {
-  return readJSON<ETFTimeSeries[]>("stock-prices.json");
+export async function loadAssetsByType(type: AssetType): Promise<Asset[]> {
+  const all = await loadAllAssets();
+  return all.filter((a) => a.assetType === type);
+}
+
+export async function loadStocks(): Promise<Asset[]> {
+  return readJSON<Asset[]>("stocks.json");
 }
 
 export async function loadETFMetadata(): Promise<ETFMetadata[]> {
@@ -24,19 +29,28 @@ export async function loadETFMetadata(): Promise<ETFMetadata[]> {
 }
 
 export async function loadRiskFreeRate(): Promise<number> {
+  // ^IRX 자산에서 가져옴 (bond 자산 클래스)
   try {
-    const data = await readJSON<{ rate: number }>("risk-free-rate.json");
-    return data.rate / 100;
-  } catch {
-    return 0.04;
-  }
+    const all = await loadAllAssets();
+    const irx = all.find((a) => a.ticker === "^IRX");
+    if (irx && irx.data.length > 0) {
+      return irx.data[irx.data.length - 1].close / 100;
+    }
+  } catch {}
+  return 0.04;
 }
 
-export async function loadLastUpdated(): Promise<string> {
-  try {
-    const data = await readJSON<{ lastUpdated: string }>("last-updated.json");
-    return data.lastUpdated;
-  } catch {
-    return "unknown";
-  }
+export async function loadMeta(): Promise<{ lastUpdated: string; assetClasses: string[]; totalAssets: number }> {
+  return readJSON("meta.json");
+}
+
+// ── 하위 호환 별칭 (기존 sector/portfolio/compare 페이지용) ──
+
+export async function loadETFPrices(): Promise<Asset[]> {
+  // equity_etf 자산 클래스만 반환 (기존 페이지가 가정하던 동작)
+  return loadAssetsByType("equity_etf");
+}
+
+export async function loadStockPrices(): Promise<Asset[]> {
+  return loadStocks();
 }

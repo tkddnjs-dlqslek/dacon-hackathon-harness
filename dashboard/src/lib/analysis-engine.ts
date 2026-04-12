@@ -1,11 +1,19 @@
 // 분석 엔진 — skills/data-analysis.md 규칙 구현
 // §1 전처리, §2 지표 계산, §3 포트폴리오, §4 ETF vs 직접투자
 
-import type { OHLCVData, ETFMetrics, PeriodLabel, CompareSettings, CompareResult } from "@/types";
+import type { OHLCV, AssetMetrics, AssetType, PeriodLabel, CompareSettings } from "@/types";
+
+// CompareResult는 인라인 정의
+export interface CompareResult {
+  etf: { cumulativeReturn: number[]; totalCost: number; volatility: number; sharpe: number; mdd: number };
+  direct: { cumulativeReturn: number[]; totalCost: number; volatility: number; sharpe: number; mdd: number };
+  dates: string[];
+  holdings: { symbol: string; weight: number; returnPct: number; volatility: number; contribution: number }[];
+}
 
 // ── §1.2 결측치 처리 ─────────────────────────────────
 
-export function fillMissing(data: OHLCVData[]): OHLCVData[] {
+export function fillMissing(data: OHLCV[]): OHLCV[] {
   if (data.length === 0) return data;
   const result = [...data];
   let consecutiveGap = 0;
@@ -30,25 +38,25 @@ export function fillMissing(data: OHLCVData[]): OHLCVData[] {
 }
 
 // §1.3 일간 수익률
-export function dailyReturns(data: OHLCVData[]): number[] {
+export function dailyReturns(data: OHLCV[]): number[] {
   return data.slice(1).map((d, i) => (d.close - data[i].close) / data[i].close);
 }
 
 // §1.3 누적 수익률
-export function cumulativeReturns(data: OHLCVData[]): number[] {
+export function cumulativeReturns(data: OHLCV[]): number[] {
   const base = data[0].close;
   return data.map((d) => d.close / base - 1);
 }
 
 // §2.1 연환산 수익률
-export function annualizedReturn(data: OHLCVData[]): number {
+export function annualizedReturn(data: OHLCV[]): number {
   const totalReturn = data[data.length - 1].close / data[0].close - 1;
   const tradingDays = data.length;
   return Math.pow(1 + totalReturn, 252 / tradingDays) - 1;
 }
 
 // §2.1 변동성 (연환산)
-export function volatility(data: OHLCVData[]): number {
+export function volatility(data: OHLCV[]): number {
   const returns = dailyReturns(data);
   const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
   const variance = returns.reduce((sum, r) => sum + (r - mean) ** 2, 0) / (returns.length - 1);
@@ -56,7 +64,7 @@ export function volatility(data: OHLCVData[]): number {
 }
 
 // §2.1 샤프 비율
-export function sharpeRatio(data: OHLCVData[], riskFreeRate: number): number {
+export function sharpeRatio(data: OHLCV[], riskFreeRate: number): number {
   const annReturn = annualizedReturn(data);
   const vol = volatility(data);
   if (vol === 0) return 0;
@@ -64,7 +72,7 @@ export function sharpeRatio(data: OHLCVData[], riskFreeRate: number): number {
 }
 
 // §2.1 최대 낙폭 (MDD)
-export function maxDrawdown(data: OHLCVData[]): number {
+export function maxDrawdown(data: OHLCV[]): number {
   let peak = data[0].close;
   let mdd = 0;
   for (const d of data) {
@@ -76,7 +84,7 @@ export function maxDrawdown(data: OHLCVData[]): number {
 }
 
 // §2.3 기간 필터
-export function filterByPeriod(data: OHLCVData[], period: PeriodLabel): OHLCVData[] {
+export function filterByPeriod(data: OHLCV[], period: PeriodLabel): OHLCV[] {
   if (period === "ALL") return data;
 
   const tradingDays: Record<string, number> = {
@@ -120,9 +128,10 @@ export function correlation(returnsA: number[], returnsB: number[]): number {
 // §2.1 전체 지표 계산
 export function computeMetrics(
   ticker: string,
-  data: OHLCVData[],
+  assetType: AssetType,
+  data: OHLCV[],
   riskFreeRate: number
-): ETFMetrics {
+): AssetMetrics {
   const periods: PeriodLabel[] = ["1M", "3M", "6M", "1Y", "YTD", "ALL"];
   const returnPeriod: Record<string, number> = {};
 
@@ -137,6 +146,7 @@ export function computeMetrics(
 
   return {
     ticker,
+    assetType,
     returnPeriod: returnPeriod as Record<PeriodLabel, number>,
     volatility: volatility(data),
     sharpe: sharpeRatio(data, riskFreeRate),
@@ -166,11 +176,12 @@ export function beta(assetReturns: number[], benchmarkReturns: number[]): number
 // §2.1 + SPY 기반 전체 지표 (베타 포함)
 export function computeMetricsWithBenchmark(
   ticker: string,
-  data: OHLCVData[],
-  benchmarkData: OHLCVData[],
+  assetType: AssetType,
+  data: OHLCV[],
+  benchmarkData: OHLCV[],
   riskFreeRate: number
-): ETFMetrics {
-  const metrics = computeMetrics(ticker, data, riskFreeRate);
+): AssetMetrics {
+  const metrics = computeMetrics(ticker, assetType, data, riskFreeRate);
   const assetRet = dailyReturns(data);
   const benchRet = dailyReturns(benchmarkData);
   metrics.beta = beta(assetRet, benchRet);
@@ -239,7 +250,7 @@ export function portfolioVolatility(
 
 // §3.4 리밸런싱 시뮬레이션
 export function rebalanceSimulation(
-  allData: OHLCVData[][],  // 각 ETF의 가격 시계열
+  allData: OHLCV[][],  // 각 ETF의 가격 시계열
   targetWeights: number[],
   rebalancePeriodDays: number, // 0 = 바이앤홀드
   initialInvestment: number = 10000
@@ -278,8 +289,8 @@ export function rebalanceSimulation(
 // ── §4 ETF vs 직접투자 비교 시뮬레이션 ──────────────
 
 export function compareETFvsDirect(
-  etfData: OHLCVData[],
-  stocksData: OHLCVData[][], // 개별종목 배열
+  etfData: OHLCV[],
+  stocksData: OHLCV[][], // 개별종목 배열
   settings: CompareSettings,
   riskFreeRate: number
 ): CompareResult {
@@ -335,8 +346,8 @@ export function compareETFvsDirect(
     }
   }
 
-  // 지표 계산 (누적 수익률 배열 → OHLCVData 변환)
-  const toOHLCV = (values: number[]): OHLCVData[] =>
+  // 지표 계산 (누적 수익률 배열 → OHLCV 변환)
+  const toOHLCV = (values: number[]): OHLCV[] =>
     values.map((v, i) => ({ date: dates[i], open: v, high: v, low: v, close: v, volume: 0 }));
 
   const etfOHLCV = toOHLCV(etfCumulative);

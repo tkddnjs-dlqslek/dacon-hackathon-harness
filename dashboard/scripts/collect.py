@@ -1,42 +1,66 @@
 """
-데이터 수집 스크립트 — yfinance → JSON (dashboard/public/data/)
+멀티 에셋 데이터 수집 스크립트 — yfinance → JSON
+
+지원 자산 클래스: equity_etf, bond, fx, commodity, crypto, index
 
 사용법:
   pip install yfinance
   python scripts/collect.py
-
-출력:
-  public/data/etf-prices.json       # 11 ETF + SPY 일간 OHLCV
-  public/data/stock-prices.json     # 섹터별 상위 5 개별종목 OHLCV
-  public/data/etf-metadata.json     # holdings, sector_weightings, expense_ratio
-  public/data/risk-free-rate.json   # ^IRX 최신 값
-  public/data/last-updated.json     # 마지막 갱신 시각
 """
 
 import json
 import os
-import sys
 from datetime import datetime, timezone
 
 import yfinance as yf
 
-# ── 설정 ──────────────────────────────────────────────
+# ── 자산 레지스트리 ───────────────────────────────────
 
-SECTOR_ETFS = {
-    "Technology": "XLK",
-    "Energy": "XLE",
-    "Healthcare": "XLV",
-    "Financials": "XLF",
-    "Consumer Disc.": "XLY",
-    "Industrials": "XLI",
-    "Real Estate": "XLRE",
-    "Utilities": "XLU",
-    "Consumer Staples": "XLP",
-    "Materials": "XLB",
-    "Communication": "XLC",
+ASSETS = {
+    "equity_etf": {
+        "XLK":  {"name": "Technology Select SPDR",       "sector": "Technology",       "currency": "USD"},
+        "XLE":  {"name": "Energy Select SPDR",           "sector": "Energy",           "currency": "USD"},
+        "XLV":  {"name": "Health Care Select SPDR",      "sector": "Healthcare",       "currency": "USD"},
+        "XLF":  {"name": "Financial Select SPDR",        "sector": "Financials",       "currency": "USD"},
+        "XLY":  {"name": "Consumer Discretionary SPDR",  "sector": "Consumer Disc.",   "currency": "USD"},
+        "XLI":  {"name": "Industrial Select SPDR",       "sector": "Industrials",      "currency": "USD"},
+        "XLRE": {"name": "Real Estate Select SPDR",      "sector": "Real Estate",      "currency": "USD"},
+        "XLU":  {"name": "Utilities Select SPDR",        "sector": "Utilities",        "currency": "USD"},
+        "XLP":  {"name": "Consumer Staples SPDR",        "sector": "Consumer Staples", "currency": "USD"},
+        "XLB":  {"name": "Materials Select SPDR",        "sector": "Materials",        "currency": "USD"},
+        "XLC":  {"name": "Communication Services SPDR",  "sector": "Communication",    "currency": "USD"},
+        "SPY":  {"name": "SPDR S&P 500 ETF Trust",       "sector": "Benchmark",        "currency": "USD"},
+    },
+    "bond": {
+        "^IRX": {"name": "13-Week T-Bill Rate",  "maturity": "3M",  "currency": "USD"},
+        "^FVX": {"name": "5-Year Treasury Yield", "maturity": "5Y",  "currency": "USD"},
+        "^TNX": {"name": "10-Year Treasury Yield","maturity": "10Y", "currency": "USD"},
+        "^TYX": {"name": "30-Year Treasury Yield","maturity": "30Y", "currency": "USD"},
+    },
+    "fx": {
+        "USDKRW=X": {"name": "USD/KRW", "base": "USD", "quote": "KRW", "currency": "KRW"},
+        "EURUSD=X": {"name": "EUR/USD", "base": "EUR", "quote": "USD", "currency": "USD"},
+        "USDJPY=X": {"name": "USD/JPY", "base": "USD", "quote": "JPY", "currency": "JPY"},
+        "GBPUSD=X": {"name": "GBP/USD", "base": "GBP", "quote": "USD", "currency": "USD"},
+    },
+    "commodity": {
+        "GLD": {"name": "SPDR Gold Shares",          "underlying": "Gold",   "currency": "USD"},
+        "SLV": {"name": "iShares Silver Trust",      "underlying": "Silver", "currency": "USD"},
+        "USO": {"name": "United States Oil Fund",    "underlying": "Oil",    "currency": "USD"},
+    },
+    "crypto": {
+        "BTC-USD": {"name": "Bitcoin",  "currency": "USD"},
+        "ETH-USD": {"name": "Ethereum", "currency": "USD"},
+    },
+    "index": {
+        "^GSPC": {"name": "S&P 500",  "region": "US",    "currency": "USD"},
+        "^IXIC": {"name": "Nasdaq",   "region": "US",    "currency": "USD"},
+        "^DJI":  {"name": "Dow Jones","region": "US",    "currency": "USD"},
+        "^KS11": {"name": "KOSPI",    "region": "KR",    "currency": "KRW"},
+        "^N225": {"name": "Nikkei 225","region": "JP",   "currency": "JPY"},
+    },
 }
 
-BENCHMARK = "SPY"
 PERIOD = "2y"
 TOP_N_HOLDINGS = 5
 
@@ -49,17 +73,22 @@ def ensure_dir(path: str):
 
 
 def ohlcv_to_records(df) -> list[dict]:
-    """yfinance DataFrame → JSON-serializable records"""
     records = []
     for date, row in df.iterrows():
-        records.append({
-            "date": date.strftime("%Y-%m-%d"),
-            "open": round(float(row["Open"]), 4),
-            "high": round(float(row["High"]), 4),
-            "low": round(float(row["Low"]), 4),
-            "close": round(float(row["Close"]), 4),
-            "volume": int(row["Volume"]),
-        })
+        try:
+            close = float(row["Close"])
+            if close != close:  # NaN check
+                continue
+            records.append({
+                "date": date.strftime("%Y-%m-%d"),
+                "open": round(float(row["Open"]), 4),
+                "high": round(float(row["High"]), 4),
+                "low": round(float(row["Low"]), 4),
+                "close": round(close, 4),
+                "volume": int(row["Volume"]) if row["Volume"] == row["Volume"] else 0,
+            })
+        except (ValueError, KeyError):
+            continue
     return records
 
 
@@ -70,46 +99,67 @@ def save_json(data, filename: str):
     print(f"  OK {filename} ({os.path.getsize(path) / 1024:.1f} KB)")
 
 
-# ── 1. ETF 가격 데이터 ───────────────────────────────
+# ── 1. 멀티 에셋 가격 수집 ───────────────────────────
 
-def collect_etf_prices():
-    print("\n[1/5] ETF 가격 수집...")
-    tickers = list(SECTOR_ETFS.values()) + [BENCHMARK]
-    df = yf.download(tickers, period=PERIOD, progress=False)
-
+def collect_all_assets():
+    print("\n[1/4] Multi-asset price collection...")
     result = []
-    for sector, ticker in {**SECTOR_ETFS, "Benchmark": BENCHMARK}.items():
-        try:
-            ticker_df = df.xs(ticker, level="Ticker", axis=1)
-            records = ohlcv_to_records(ticker_df)
-            result.append({
-                "ticker": ticker,
-                "name": ticker,  # 메타데이터에서 업데이트
-                "sector": sector,
-                "data": records,
-            })
-            print(f"  {ticker}: {len(records)}행")
-        except Exception as e:
-            print(f"  WARN {ticker}: {e}")
 
-    save_json(result, "etf-prices.json")
+    for asset_type, tickers in ASSETS.items():
+        print(f"\n  -- {asset_type} --")
+        ticker_list = list(tickers.keys())
+
+        try:
+            df = yf.download(ticker_list, period=PERIOD, progress=False, auto_adjust=False)
+        except Exception as e:
+            print(f"    WARN bulk download failed: {e}")
+            continue
+
+        for ticker in ticker_list:
+            try:
+                if len(ticker_list) > 1:
+                    ticker_df = df.xs(ticker, level="Ticker", axis=1).dropna(how="all")
+                else:
+                    ticker_df = df.dropna(how="all")
+                records = ohlcv_to_records(ticker_df)
+                if len(records) < 30:
+                    print(f"    WARN {ticker}: only {len(records)} rows, skipped")
+                    continue
+
+                meta = tickers[ticker]
+                asset = {
+                    "ticker": ticker,
+                    "name": meta.get("name", ticker),
+                    "assetType": asset_type,
+                    "currency": meta.get("currency", "USD"),
+                    "data": records,
+                    "metadata": {k: v for k, v in meta.items() if k not in ("name", "currency")},
+                }
+                result.append(asset)
+                print(f"    OK {ticker}: {len(records)} rows")
+            except Exception as e:
+                print(f"    WARN {ticker}: {e}")
+
+    save_json(result, "assets.json")
     return result
 
 
-# ── 2. ETF 메타데이터 ────────────────────────────────
+# ── 2. ETF 메타데이터 (equity_etf 전용) ──────────────
 
-def collect_etf_metadata():
-    print("\n[2/5] ETF 메타데이터 수집...")
+def collect_etf_metadata(assets):
+    print("\n[2/4] ETF metadata...")
     result = []
 
-    for sector, ticker in SECTOR_ETFS.items():
+    etfs = [a for a in assets if a["assetType"] == "equity_etf" and a["ticker"] != "SPY"]
+
+    for etf in etfs:
+        ticker = etf["ticker"]
         try:
             tk = yf.Ticker(ticker)
             info = tk.info
             fd = tk.funds_data
-
-            # top holdings
             top = fd.top_holdings
+
             holdings = []
             for sym, row in top.head(10).iterrows():
                 holdings.append({
@@ -118,18 +168,17 @@ def collect_etf_metadata():
                     "weight": round(float(row["Holding Percent"]), 6),
                 })
 
-            # sector weightings
             sw = fd.sector_weightings
 
             result.append({
                 "ticker": ticker,
                 "name": info.get("shortName", ticker),
-                "sector": sector,
+                "sector": etf["metadata"].get("sector", ""),
                 "expenseRatio": info.get("netExpenseRatio", 0.0008),
                 "topHoldings": holdings,
                 "sectorWeightings": {k: round(v, 6) for k, v in sw.items()},
             })
-            print(f"  {ticker}: {len(holdings)} holdings")
+            print(f"  OK {ticker}: {len(holdings)} holdings")
         except Exception as e:
             print(f"  WARN {ticker}: {e}")
 
@@ -137,12 +186,11 @@ def collect_etf_metadata():
     return result
 
 
-# ── 3. 개별종목 가격 데이터 ──────────────────────────
+# ── 3. 개별 종목 (ETF 구성종목) ──────────────────────
 
-def collect_stock_prices(metadata: list[dict]):
-    print("\n[3/5] 개별종목 가격 수집...")
+def collect_stock_prices(metadata):
+    print("\n[3/4] Stock prices (ETF holdings)...")
 
-    # 메타데이터에서 상위 N개 종목 추출
     all_tickers = set()
     ticker_sector_map = {}
     for etf in metadata:
@@ -152,76 +200,66 @@ def collect_stock_prices(metadata: list[dict]):
             ticker_sector_map[sym] = etf["sector"]
 
     tickers = sorted(all_tickers)
-    print(f"  대상: {len(tickers)}개 종목")
+    print(f"  target: {len(tickers)} stocks")
 
-    df = yf.download(tickers, period=PERIOD, progress=False)
+    df = yf.download(tickers, period=PERIOD, progress=False, auto_adjust=False)
 
     result = []
     for ticker in tickers:
         try:
-            ticker_df = df.xs(ticker, level="Ticker", axis=1)
+            ticker_df = df.xs(ticker, level="Ticker", axis=1).dropna(how="all")
             records = ohlcv_to_records(ticker_df)
-            result.append({
-                "ticker": ticker,
-                "name": ticker,
-                "sector": ticker_sector_map.get(ticker, "Unknown"),
-                "data": records,
-            })
+            if len(records) >= 30:
+                result.append({
+                    "ticker": ticker,
+                    "name": ticker,
+                    "assetType": "equity_etf",
+                    "currency": "USD",
+                    "sector": ticker_sector_map.get(ticker, "Unknown"),
+                    "data": records,
+                })
         except Exception as e:
             print(f"  WARN {ticker}: {e}")
 
-    print(f"  수집 완료: {len(result)}개 종목")
-    save_json(result, "stock-prices.json")
+    print(f"  collected: {len(result)} stocks")
+    save_json(result, "stocks.json")
 
 
-# ── 4. 무위험수익률 ─────────────────────────────────
+# ── 4. 메타 ──────────────────────────────────────────
 
-def collect_risk_free_rate():
-    print("\n[4/5] 무위험수익률 (^IRX) 수집...")
-    try:
-        tk = yf.Ticker("^IRX")
-        hist = tk.history(period="5d")
-        rate = float(hist["Close"].iloc[-1])
-        save_json({"rate": round(rate, 4), "source": "^IRX (13-Week T-Bill)"}, "risk-free-rate.json")
-        print(f"  현재: {rate:.2f}%")
-    except Exception as e:
-        print(f"  WARN fallback 4.0% 사용: {e}")
-        save_json({"rate": 4.0, "source": "fallback"}, "risk-free-rate.json")
-
-
-# ── 5. 갱신 시각 ────────────────────────────────────
-
-def save_last_updated():
+def save_meta():
+    print("\n[4/4] Metadata...")
     now = datetime.now(timezone.utc).isoformat()
-    save_json({"lastUpdated": now}, "last-updated.json")
+
+    summary = {
+        "lastUpdated": now,
+        "assetClasses": list(ASSETS.keys()),
+        "totalAssets": sum(len(v) for v in ASSETS.values()),
+        "period": PERIOD,
+    }
+    save_json(summary, "meta.json")
 
 
 # ── main ─────────────────────────────────────────────
 
 def main():
-    print("=" * 50)
-    print("데이터 수집 시작 (yfinance → JSON)")
-    print("=" * 50)
+    print("=" * 60)
+    print("Multi-Asset Data Collection (yfinance)")
+    print("=" * 60)
+    print(f"Asset classes: {list(ASSETS.keys())}")
+    print(f"Total tickers: {sum(len(v) for v in ASSETS.values())}")
 
     ensure_dir(OUTPUT_DIR)
 
-    etf_prices = collect_etf_prices()
-    metadata = collect_etf_metadata()
+    assets = collect_all_assets()
+    metadata = collect_etf_metadata(assets)
     collect_stock_prices(metadata)
-    collect_risk_free_rate()
-    save_last_updated()
+    save_meta()
 
-    # ETF 이름 업데이트 (메타데이터 → 가격 데이터)
-    name_map = {m["ticker"]: m["name"] for m in metadata}
-    for etf in etf_prices:
-        if etf["ticker"] in name_map:
-            etf["name"] = name_map[etf["ticker"]]
-    save_json(etf_prices, "etf-prices.json")
-
-    print("\n" + "=" * 50)
+    print("\n" + "=" * 60)
     print("Done!")
-    print(f"   출력: {os.path.abspath(OUTPUT_DIR)}")
-    print("=" * 50)
+    print(f"  Output: {os.path.abspath(OUTPUT_DIR)}")
+    print("=" * 60)
 
 
 if __name__ == "__main__":

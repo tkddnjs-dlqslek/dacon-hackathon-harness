@@ -1,6 +1,19 @@
 // 차트 자동 선택 엔진 — skills/visualization.md §1.2 구현
 
-import type { ChartType } from "@/types";
+export type ChartType =
+  | "LineChart"
+  | "MultiLineChart"
+  | "StackedAreaChart"
+  | "HorizontalBarChart"
+  | "VerticalBarChart"
+  | "DonutChart"
+  | "ScatterPlot"
+  | "Heatmap"
+  | "Histogram"
+  | "MetricCard"
+  | "AreaChart"
+  | "DualLineChart"
+  | "GroupedBarChart";
 
 interface DataDescriptor {
   hasTimeSeries: boolean;

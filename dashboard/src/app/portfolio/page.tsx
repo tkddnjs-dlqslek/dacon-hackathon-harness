@@ -16,7 +16,7 @@ export default async function PortfolioPage() {
   // 클라이언트 컴포넌트에 전달할 최소 데이터
   const etfInputs = sectorETFs.map((e) => ({
     ticker: e.ticker,
-    sector: e.sector,
+    sector: e.sector ?? "Unknown",
     data: e.data,
   }));
 

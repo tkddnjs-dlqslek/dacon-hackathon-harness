@@ -25,12 +25,12 @@ export default async function ComparePage() {
       .filter(Boolean) as { ticker: string; data: typeof etf.data }[];
 
     return {
-      sector: etf.sector,
+      sector: etf.sector ?? "Unknown",
       etfTicker: etf.ticker,
       etfData: etf.data,
       stocks,
     };
-  });
+  }).filter((s) => s.etfTicker !== "SPY");
 
   return (
     <div className="space-y-6">

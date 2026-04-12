@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Sector ETF Dashboard",
-  description: "섹터별 ETF 포트폴리오 분석 대시보드 — Skills 기반 자동 생성",
+  title: "Multi-Asset Investment Analytics",
+  description: "Skills 기반 범용 투자 데이터 분석 시스템 — 6개 자산 클래스 지원",
 };
 
 export default function RootLayout({

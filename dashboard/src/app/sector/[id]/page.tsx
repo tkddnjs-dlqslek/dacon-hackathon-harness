@@ -45,7 +45,7 @@ export default async function SectorPage({ params }: SectorPageProps) {
   }
 
   // ETF 지표
-  const metrics = computeMetricsWithBenchmark(etf.ticker, etf.data, spy?.data ?? etf.data, riskFreeRate);
+  const metrics = computeMetricsWithBenchmark(etf.ticker, "equity_etf", etf.data, spy?.data ?? etf.data, riskFreeRate);
 
   // 상위 종목 데이터
   const holdingSymbols = meta.topHoldings.slice(0, 5).map((h) => h.symbol);
