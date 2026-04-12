@@ -1,21 +1,22 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { CumulativeReturnChart, SectorBarChart } from "@/components/charts";
-import type { Asset, OHLCV, AssetType, Insight } from "@/types";
-import { ASSET_CLASS_COLORS, ASSET_CLASS_LABELS } from "@/types";
+import { CumulativeReturnChart } from "@/components/charts";
+import type { Asset, OHLCV, AssetType, Insight, UniverseAsset } from "@/types";
+import { ASSET_CLASS_COLORS, ASSET_CLASS_LABELS, T } from "@/types";
 
 interface Props {
   assets: Asset[];
+  universe: UniverseAsset[];
   insights: Insight[];
 }
 
 const PERIODS = [
-  { label: "1M", days: 21 },
-  { label: "3M", days: 63 },
-  { label: "6M", days: 126 },
-  { label: "1Y", days: 252 },
-  { label: "ALL", days: 0 },
+  { label: "1개월", days: 21 },
+  { label: "3개월", days: 63 },
+  { label: "6개월", days: 126 },
+  { label: "1년", days: 252 },
+  { label: "전체", days: 0 },
 ];
 
 const ASSET_TYPES: AssetType[] = ["equity_etf", "bond", "fx", "commodity", "crypto", "index"];
@@ -32,14 +33,12 @@ function calcMetrics(data: OHLCV[]) {
   return { ret, vol, mdd };
 }
 
-// 일간 수익률
 function dailyReturns(data: OHLCV[]): number[] {
   const r: number[] = [];
   for (let i = 1; i < data.length; i++) r.push(data[i].close / data[i - 1].close - 1);
   return r;
 }
 
-// 피어슨 상관
 function corr(a: number[], b: number[]): number {
   const n = Math.min(a.length, b.length);
   const A = a.slice(-n), B = b.slice(-n);
@@ -61,11 +60,18 @@ const insightColors: Record<string, string> = {
   success: "border-green-800 bg-green-950 text-green-300",
   info: "border-blue-800 bg-blue-950 text-blue-300",
 };
-const insightLabels: Record<string, string> = { danger: "ALERT", warning: "WARN", success: "GOOD", info: "INFO" };
+const insightLabels: Record<string, string> = {
+  danger: T.alert,
+  warning: T.warn,
+  success: T.good,
+  info: T.info,
+};
 
-export default function MultiAssetDashboard({ assets, insights }: Props) {
+export default function MultiAssetDashboard({ assets, universe, insights }: Props) {
   const [periodIdx, setPeriodIdx] = useState(3); // 1Y
   const [selectedTypes, setSelectedTypes] = useState<Set<AssetType>>(new Set(ASSET_TYPES));
+  const [showUniverse, setShowUniverse] = useState(false);
+  const [universeSearch, setUniverseSearch] = useState("");
 
   const period = PERIODS[periodIdx];
 
@@ -76,7 +82,6 @@ export default function MultiAssetDashboard({ assets, insights }: Props) {
     setSelectedTypes(newSet);
   };
 
-  // 자산 클래스 대표 티커 (크로스 에셋 분석용)
   const REPRESENTATIVES: Record<AssetType, string> = {
     equity_etf: "SPY",
     bond: "^TNX",
@@ -93,7 +98,6 @@ export default function MultiAssetDashboard({ assets, insights }: Props) {
       .map((a) => ({ ...a, sliced: slice(a.data) }));
   }, [assets, selectedTypes, period]);
 
-  // 자산 클래스별 평균 수익률
   const classReturns = useMemo(() => {
     return ASSET_TYPES.map((t) => {
       const ofType = filtered.filter((a) => a.assetType === t);
@@ -104,7 +108,6 @@ export default function MultiAssetDashboard({ assets, insights }: Props) {
     }).filter((c) => c.count > 0);
   }, [filtered]);
 
-  // 크로스 에셋 상관 행렬 (대표 티커 간)
   const crossCorr = useMemo(() => {
     const reps = ASSET_TYPES
       .filter((t) => selectedTypes.has(t))
@@ -120,7 +123,6 @@ export default function MultiAssetDashboard({ assets, insights }: Props) {
     return { reps, matrix };
   }, [assets, selectedTypes, period]);
 
-  // 누적 수익률 차트 데이터 (대표 티커만)
   const chartData = useMemo(() => {
     const reps = ASSET_TYPES
       .filter((t) => selectedTypes.has(t))
@@ -149,10 +151,25 @@ export default function MultiAssetDashboard({ assets, insights }: Props) {
   const totalAssets = filtered.length;
   const positiveCount = filtered.filter((a) => calcMetrics(a.sliced).ret > 0).length;
 
+  // Universe (S&P 500) — 검색 + 정렬
+  const universeFiltered = useMemo(() => {
+    let list = universe;
+    if (universeSearch) {
+      const q = universeSearch.toUpperCase();
+      list = list.filter((u) => u.ticker.includes(q));
+    }
+    return list.sort((a, b) => b.metrics.return1Y - a.metrics.return1Y);
+  }, [universe, universeSearch]);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Multi-Asset Dashboard</h1>
+        <div>
+          <h1 className="text-2xl font-bold">{T.multiAssetDashboard}</h1>
+          <p className="text-xs text-gray-500">
+            상세 분석 자산 {assets.length}개 · S&P 500 + ETF 유니버스 {universe.length}개 · 총 {assets.length + universe.length}개
+          </p>
+        </div>
         <div className="flex gap-1">
           {PERIODS.map((p, i) => (
             <button key={p.label} onClick={() => setPeriodIdx(i)}
@@ -166,7 +183,7 @@ export default function MultiAssetDashboard({ assets, insights }: Props) {
       {/* 자산 클래스 필터 */}
       <section className="rounded-lg border border-gray-800 bg-gray-900 p-3">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-gray-400">Asset Classes:</span>
+          <span className="text-xs text-gray-400">{T.assetClasses}:</span>
           {ASSET_TYPES.map((t) => {
             const isOn = selectedTypes.has(t);
             return (
@@ -198,32 +215,32 @@ export default function MultiAssetDashboard({ assets, insights }: Props) {
       {/* 요약 KPI */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <div className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-          <p className="text-xs text-gray-400">Tracked Assets</p>
+          <p className="text-xs text-gray-400">{T.trackedAssets}</p>
           <p className="mt-1 text-2xl font-bold">{totalAssets}</p>
         </div>
         <div className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-          <p className="text-xs text-gray-400">Asset Classes</p>
+          <p className="text-xs text-gray-400">{T.assetClasses}</p>
           <p className="mt-1 text-2xl font-bold">{selectedTypes.size}</p>
         </div>
         <div className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-          <p className="text-xs text-gray-400">Positive ({period.label})</p>
+          <p className="text-xs text-gray-400">{T.positiveAssets} ({period.label})</p>
           <p className="mt-1 text-2xl font-bold text-green-400">{positiveCount}</p>
         </div>
         <div className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-          <p className="text-xs text-gray-400">Negative ({period.label})</p>
+          <p className="text-xs text-gray-400">{T.negativeAssets} ({period.label})</p>
           <p className="mt-1 text-2xl font-bold text-red-400">{totalAssets - positiveCount}</p>
         </div>
       </div>
 
       {/* 자산 클래스별 평균 수익률 */}
       <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-        <h2 className="mb-3 font-semibold">Asset Class Performance ({period.label})</h2>
+        <h2 className="mb-3 font-semibold">{T.classPerformance} ({period.label})</h2>
         <div className="space-y-2">
           {classReturns.sort((a, b) => b.ret - a.ret).map((c) => (
             <div key={c.type} className="flex items-center gap-3">
               <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: ASSET_CLASS_COLORS[c.type] }} />
               <span className="w-32 text-sm text-gray-300">{c.label}</span>
-              <span className="w-12 text-xs text-gray-500">({c.count})</span>
+              <span className="w-12 text-xs text-gray-500">({c.count}개)</span>
               <div className="flex-1">
                 <div
                   className={`h-5 rounded ${c.ret >= 0 ? "bg-green-600" : "bg-red-600"}`}
@@ -240,7 +257,7 @@ export default function MultiAssetDashboard({ assets, insights }: Props) {
 
       {/* 대표 자산 누적 수익률 */}
       <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-        <h2 className="mb-3 font-semibold">Cross-Asset Performance — Representative Tickers</h2>
+        <h2 className="mb-3 font-semibold">{T.crossAssetPerf} — {T.representativeTickers}</h2>
         {chartData.dates.length > 0 && (
           <CumulativeReturnChart dates={chartData.dates} series={chartData.series} />
         )}
@@ -248,7 +265,7 @@ export default function MultiAssetDashboard({ assets, insights }: Props) {
 
       {/* 크로스 에셋 상관 매트릭스 */}
       <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-        <h2 className="mb-3 font-semibold">Cross-Asset Correlation Matrix</h2>
+        <h2 className="mb-3 font-semibold">{T.crossAssetCorr}</h2>
         <div className="overflow-x-auto">
           <table className="text-xs">
             <thead>
@@ -283,23 +300,23 @@ export default function MultiAssetDashboard({ assets, insights }: Props) {
           </table>
         </div>
         <p className="mt-2 text-xs text-gray-500">
-          파랑: 양의 상관 / 빨강: 음의 상관 / 색상 강도: 절댓값
+          파랑: 양의 상관 / 빨강: 음의 상관 / 색 진하기: 절댓값
         </p>
       </section>
 
       {/* 전체 자산 테이블 */}
       <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-        <h2 className="mb-3 font-semibold">All Assets ({totalAssets})</h2>
+        <h2 className="mb-3 font-semibold">{T.allAssets} ({totalAssets}개)</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-gray-700 text-xs text-gray-400">
               <tr>
-                <th className="pb-2">Class</th>
-                <th className="pb-2">Ticker</th>
-                <th className="pb-2">Name</th>
-                <th className="pb-2 text-right">{period.label} Return</th>
-                <th className="pb-2 text-right">Volatility</th>
-                <th className="pb-2 text-right">MDD</th>
+                <th className="pb-2">{T.class}</th>
+                <th className="pb-2">{T.ticker}</th>
+                <th className="pb-2">{T.name}</th>
+                <th className="pb-2 text-right">{period.label} {T.return}</th>
+                <th className="pb-2 text-right">{T.volatility}</th>
+                <th className="pb-2 text-right">{T.mdd}</th>
               </tr>
             </thead>
             <tbody>
@@ -324,6 +341,69 @@ export default function MultiAssetDashboard({ assets, insights }: Props) {
             </tbody>
           </table>
         </div>
+      </section>
+
+      {/* S&P 500 유니버스 — 검색 가능한 대형 테이블 */}
+      <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-semibold">
+            S&P 500 유니버스 ({universe.length}개)
+            <span className="ml-2 text-xs text-gray-500">사전 계산 지표 · 1년 기준</span>
+          </h2>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={universeSearch}
+              onChange={(e) => setUniverseSearch(e.target.value)}
+              placeholder="종목 검색 (예: AAPL)"
+              className="rounded bg-gray-800 px-3 py-1 text-sm text-white placeholder-gray-500"
+            />
+            <button
+              onClick={() => setShowUniverse(!showUniverse)}
+              className="rounded bg-gray-800 px-3 py-1 text-sm text-gray-300 hover:text-white"
+            >
+              {showUniverse ? "접기" : "펼치기"}
+            </button>
+          </div>
+        </div>
+        {showUniverse && (
+          <div className="max-h-[500px] overflow-y-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="sticky top-0 bg-gray-900 border-b border-gray-700 text-xs text-gray-400">
+                <tr>
+                  <th className="pb-2">{T.ticker}</th>
+                  <th className="pb-2 text-right">현재가</th>
+                  <th className="pb-2 text-right">1년 {T.return}</th>
+                  <th className="pb-2 text-right">{T.volatility}</th>
+                  <th className="pb-2 text-right">{T.sharpe}</th>
+                  <th className="pb-2 text-right">{T.mdd}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {universeFiltered.slice(0, 200).map((u) => (
+                  <tr key={u.ticker} className="border-b border-gray-800">
+                    <td className="py-2 font-mono font-bold">{u.ticker}</td>
+                    <td className="py-2 text-right font-mono text-gray-300">${u.metrics.currentPrice.toFixed(2)}</td>
+                    <td className={`py-2 text-right font-mono ${u.metrics.return1Y >= 0 ? "text-green-400" : "text-red-400"}`}>
+                      {(u.metrics.return1Y * 100).toFixed(1)}%
+                    </td>
+                    <td className="py-2 text-right font-mono text-gray-300">{(u.metrics.volatility * 100).toFixed(1)}%</td>
+                    <td className={`py-2 text-right font-mono ${u.metrics.sharpe > 1 ? "text-green-400" : u.metrics.sharpe < 0 ? "text-red-400" : "text-gray-300"}`}>
+                      {u.metrics.sharpe.toFixed(2)}
+                    </td>
+                    <td className="py-2 text-right font-mono text-red-400">{(u.metrics.mdd * 100).toFixed(1)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {universeFiltered.length > 200 && (
+              <p className="mt-2 text-center text-xs text-gray-500">상위 200개 표시 중 (전체 {universeFiltered.length}개)</p>
+            )}
+          </div>
+        )}
+        {!showUniverse && (
+          <p className="text-sm text-gray-500">펼치기를 눌러 S&P 500 전체 종목을 확인하세요</p>
+        )}
       </section>
     </div>
   );

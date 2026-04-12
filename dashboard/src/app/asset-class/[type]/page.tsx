@@ -167,18 +167,18 @@ export default async function AssetClassPage({ params }: PageProps) {
         <div className="flex items-center gap-3">
           <div className="h-4 w-4 rounded" style={{ backgroundColor: color }} />
           <h1 className="text-2xl font-bold">{profile.label}</h1>
-          <span className="rounded-full bg-gray-800 px-3 py-1 text-xs text-gray-400">{assets.length} assets</span>
+          <span className="rounded-full bg-gray-800 px-3 py-1 text-xs text-gray-400">{assets.length}개 자산</span>
         </div>
         <p className="mt-2 text-sm text-gray-400">{profile.description}</p>
         <p className="mt-1 text-xs text-gray-500">
-          Value mode: <span className="font-mono">{profile.valueMode}</span> · Display: {profile.valueLabel}
+          표시 모드: <span className="font-mono">{profile.valueMode}</span> · 표시 단위: {profile.valueLabel}
           {profile.valueUnit && ` (${profile.valueUnit})`}
         </p>
       </header>
 
       {/* 자산 타입별 적용 지표 (Skills 기반) */}
       <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-        <h2 className="mb-3 text-sm font-semibold text-gray-400">Applicable Metrics (from data-analysis.md §3)</h2>
+        <h2 className="mb-3 text-sm font-semibold text-gray-400">적용 가능한 지표 (data-analysis.md §3 기반)</h2>
         <div className="flex flex-wrap gap-2">
           {profile.metrics.map((m) => (
             <span key={m.key} className="rounded-full border border-gray-700 px-3 py-1 text-xs text-gray-300">
@@ -192,20 +192,20 @@ export default async function AssetClassPage({ params }: PageProps) {
       {/* 누적 수익률 차트 */}
       <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
         <h2 className="mb-3 font-semibold">
-          {profile.valueMode === "yield" ? "Yield Change (1Y)" : "Cumulative Returns (1Y)"}
+          {profile.valueMode === "yield" ? "금리 변화 (1년)" : "누적 수익률 (1년)"}
         </h2>
         <CumulativeReturnChart dates={chartDates} series={chartSeries} />
       </section>
 
       {/* 자산 테이블 — 프로파일에 정의된 지표만 표시 */}
       <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-        <h2 className="mb-3 font-semibold">Assets — Type-Specific Metrics</h2>
+        <h2 className="mb-3 font-semibold">자산별 지표 (자산 타입 특화)</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-gray-700 text-xs text-gray-400">
               <tr>
-                <th className="pb-2">Ticker</th>
-                <th className="pb-2">Name</th>
+                <th className="pb-2">종목</th>
+                <th className="pb-2">이름</th>
                 {profile.metrics.map((m) => (
                   <th key={m.key} className="pb-2 text-right">{m.label}</th>
                 ))}

@@ -41,6 +41,22 @@ export interface AssetMetrics {
 
 export type PeriodLabel = "1M" | "3M" | "6M" | "1Y" | "YTD" | "ALL";
 
+// Universe tier — 사전 계산 지표만 (S&P 500 등 대량 자산용)
+export interface UniverseAsset {
+  ticker: string;
+  name: string;
+  assetType: AssetType;
+  metrics: {
+    return1Y: number;
+    annReturn: number;
+    volatility: number;
+    sharpe: number;
+    mdd: number;
+    currentPrice: number;
+    dataPoints: number;
+  };
+}
+
 // ETF 메타데이터 (equity_etf 전용)
 export interface ETFMetadata {
   ticker: string;
@@ -90,13 +106,95 @@ export const ASSET_CLASS_COLORS: Record<AssetType, string> = {
 };
 
 export const ASSET_CLASS_LABELS: Record<AssetType, string> = {
-  equity_etf: "Stocks/ETF",
-  bond: "Bonds",
-  fx: "FX",
-  commodity: "Commodities",
-  crypto: "Crypto",
-  index: "Indices",
+  equity_etf: "주식 / ETF",
+  bond: "채권 / 금리",
+  fx: "외환",
+  commodity: "원자재",
+  crypto: "암호화폐",
+  index: "시장 지수",
 };
+
+// 영어 → 한글 번역 (UI에 사용)
+export const T = {
+  // 페이지 제목
+  dashboard: "대시보드",
+  multiAssetDashboard: "멀티 에셋 대시보드",
+  portfolio: "포트폴리오",
+  compare: "ETF vs 직접 투자",
+  sectors: "섹터",
+  assetClasses: "자산 클래스",
+
+  // KPI / 지표
+  return: "수익률",
+  avgReturn: "평균 수익률",
+  volatility: "변동성",
+  avgVolatility: "평균 변동성",
+  sharpe: "샤프 비율",
+  avgSharpe: "평균 샤프",
+  mdd: "최대 낙폭",
+  worstMDD: "최악 낙폭",
+  beta: "베타",
+  yield: "수익률(금리)",
+  currentYield: "현재 금리",
+  yieldChange: "금리 변화",
+  rateChange: "환율 변화",
+  exchangeRate: "환율",
+  range52w: "52주 범위",
+  stockCorr: "주식 상관관계",
+  btcCorr: "BTC 상관관계",
+  globalCorr: "글로벌 상관관계",
+  inflationHedge: "인플레 헤지 점수",
+  cumulativeReturn: "누적 수익률",
+  yieldChangeChart: "금리 변화",
+  price: "가격",
+
+  // 자산 분류
+  trackedAssets: "추적 자산",
+  positiveAssets: "수익 자산",
+  negativeAssets: "손실 자산",
+  totalAssets: "전체 자산 수",
+
+  // 섹션
+  insightSummary: "주요 인사이트",
+  classPerformance: "자산 클래스별 성과",
+  crossAssetCorr: "크로스 에셋 상관관계",
+  crossAssetPerf: "크로스 에셋 누적 수익률",
+  allAssets: "전체 자산",
+  sectorAlloc: "섹터 비중",
+  sectorRanking: "섹터별 수익률 랭킹",
+  etfPerformance: "ETF 성과",
+  correlationMatrix: "섹터 상관관계 행렬",
+  rebalancing: "리밸런싱 비교",
+  backtest: "백테스트",
+  insights: "인사이트",
+  applicableMetrics: "적용 가능한 지표",
+
+  // 네비게이션
+  representativeTickers: "대표 티커",
+  filter: "필터",
+
+  // 인사이트 라벨
+  alert: "경고",
+  warn: "주의",
+  good: "긍정",
+  info: "정보",
+
+  // 기타
+  ticker: "종목",
+  name: "이름",
+  asset: "자산",
+  class: "분류",
+  weight: "비중",
+  contribution: "기여도",
+  none: "없음",
+  monthly: "월간",
+  quarterly: "분기",
+  semiAnnual: "반기",
+  annual: "연간",
+  buyAndHold: "바이앤홀드",
+  rebalanced: "리밸런싱",
+  equalWeight: "균등 배분",
+} as const;
 
 export const SECTOR_COLORS: Record<string, string> = {
   Technology: "#3B82F6",

@@ -103,10 +103,10 @@ export default async function SectorPage({ params }: SectorPageProps) {
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <section className="grid grid-cols-2 gap-3">
           {[
-            { label: "Return (1Y)", value: `${(metrics.returnPeriod["1Y"] * 100).toFixed(1)}%`, positive: metrics.returnPeriod["1Y"] >= 0 },
-            { label: "Volatility", value: `${(metrics.volatility * 100).toFixed(1)}%` },
-            { label: "Sharpe", value: metrics.sharpe.toFixed(2), positive: metrics.sharpe > 1 },
-            { label: "MDD", value: `${(metrics.mdd * 100).toFixed(1)}%` },
+            { label: "1년 수익률", value: `${(metrics.returnPeriod["1Y"] * 100).toFixed(1)}%`, positive: metrics.returnPeriod["1Y"] >= 0 },
+            { label: "변동성", value: `${(metrics.volatility * 100).toFixed(1)}%` },
+            { label: "샤프", value: metrics.sharpe.toFixed(2), positive: metrics.sharpe > 1 },
+            { label: "최대 낙폭", value: `${(metrics.mdd * 100).toFixed(1)}%` },
           ].map((kpi) => (
             <div key={kpi.label} className="rounded-lg border border-gray-800 bg-gray-900 p-4">
               <p className="text-xs text-gray-400">{kpi.label}</p>
@@ -117,7 +117,7 @@ export default async function SectorPage({ params }: SectorPageProps) {
           ))}
         </section>
         <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-          <h2 className="mb-2 text-sm font-semibold text-gray-400">Top 10 Holdings</h2>
+          <h2 className="mb-2 text-sm font-semibold text-gray-400">상위 10개 구성 종목</h2>
           <SectorDonutChart data={holdingsDonut} />
         </section>
       </div>
@@ -130,14 +130,14 @@ export default async function SectorPage({ params }: SectorPageProps) {
 
       {/* D. 종목별 성과 테이블 */}
       <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-        <h2 className="mb-3 font-semibold">Holdings Performance</h2>
+        <h2 className="mb-3 font-semibold">구성 종목 성과</h2>
         <table className="w-full text-left text-sm">
           <thead className="border-b border-gray-700 text-xs text-gray-400">
             <tr>
-              <th className="pb-2">Ticker</th>
-              <th className="pb-2 text-right">Weight</th>
-              <th className="pb-2 text-right">Return</th>
-              <th className="pb-2 text-right">Volatility</th>
+              <th className="pb-2">종목</th>
+              <th className="pb-2 text-right">비중</th>
+              <th className="pb-2 text-right">수익률</th>
+              <th className="pb-2 text-right">변동성</th>
             </tr>
           </thead>
           <tbody>
@@ -158,7 +158,7 @@ export default async function SectorPage({ params }: SectorPageProps) {
       {/* F. 인사이트 */}
       {insights.length > 0 && (
         <section className="space-y-2">
-          <h2 className="font-semibold">Insights</h2>
+          <h2 className="font-semibold">인사이트</h2>
           {insights.map((ins, i) => (
             <div key={i} className={`rounded-lg border p-3 text-sm ${insightColors[ins.level]}`}>
               {ins.message}

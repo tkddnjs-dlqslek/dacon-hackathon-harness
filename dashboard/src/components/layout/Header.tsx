@@ -5,26 +5,26 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 const ASSET_CLASSES = [
-  { label: "Stocks / ETF", slug: "stocks", color: "#3B82F6" },
-  { label: "Bonds", slug: "bonds", color: "#06B6D4" },
-  { label: "FX", slug: "fx", color: "#8B5CF6" },
-  { label: "Commodities", slug: "commodities", color: "#F59E0B" },
-  { label: "Crypto", slug: "crypto", color: "#F97316" },
-  { label: "Indices", slug: "indices", color: "#6B7280" },
+  { label: "주식 / ETF", slug: "stocks", color: "#3B82F6" },
+  { label: "채권 / 금리 (Bonds)", slug: "bonds", color: "#06B6D4" },
+  { label: "외환 (FX)", slug: "fx", color: "#8B5CF6" },
+  { label: "원자재 (Commodities)", slug: "commodities", color: "#F59E0B" },
+  { label: "암호화폐 (Crypto)", slug: "crypto", color: "#F97316" },
+  { label: "시장 지수 (Indices)", slug: "indices", color: "#6B7280" },
 ];
 
 const SECTORS = [
-  { label: "Technology", slug: "technology" },
-  { label: "Energy", slug: "energy" },
-  { label: "Healthcare", slug: "healthcare" },
-  { label: "Financials", slug: "financials" },
-  { label: "Consumer Disc.", slug: "consumer-disc" },
-  { label: "Industrials", slug: "industrials" },
-  { label: "Real Estate", slug: "real-estate" },
-  { label: "Utilities", slug: "utilities" },
-  { label: "Consumer Staples", slug: "consumer-staples" },
-  { label: "Materials", slug: "materials" },
-  { label: "Communication", slug: "communication" },
+  { label: "기술 (Technology)", slug: "technology" },
+  { label: "에너지 (Energy)", slug: "energy" },
+  { label: "헬스케어 (Healthcare)", slug: "healthcare" },
+  { label: "금융 (Financials)", slug: "financials" },
+  { label: "임의소비재 (Consumer Disc.)", slug: "consumer-disc" },
+  { label: "산업재 (Industrials)", slug: "industrials" },
+  { label: "부동산 (Real Estate)", slug: "real-estate" },
+  { label: "유틸리티 (Utilities)", slug: "utilities" },
+  { label: "필수소비재 (Consumer Staples)", slug: "consumer-staples" },
+  { label: "소재 (Materials)", slug: "materials" },
+  { label: "통신 (Communication)", slug: "communication" },
 ];
 
 export default function Header() {
@@ -39,11 +39,11 @@ export default function Header() {
     <header className="border-b border-gray-800 bg-gray-950 px-6 py-3">
       <div className="mx-auto flex max-w-7xl items-center justify-between">
         <Link href="/" className="text-lg font-bold text-white">
-          Multi-Asset Investment Analytics
+          멀티 에셋 투자 분석 (Multi-Asset Analytics)
         </Link>
         <nav className="flex items-center gap-1">
           <Link href="/" className={`rounded-md px-3 py-1.5 text-sm transition-colors ${pathname === "/" ? "bg-gray-800 text-white" : "text-gray-400 hover:text-white"}`}>
-            Dashboard
+            대시보드
           </Link>
 
           {/* 자산 클래스 드롭다운 */}
@@ -52,7 +52,7 @@ export default function Header() {
               onClick={() => { setClassOpen(!classOpen); setSectorOpen(false); }}
               className={`rounded-md px-3 py-1.5 text-sm transition-colors ${isAssetClass ? "bg-gray-800 text-white" : "text-gray-400 hover:text-white"}`}
             >
-              Asset Classes ▾
+              자산 클래스 ▾
             </button>
             {classOpen && (
               <div className="absolute right-0 top-full z-50 mt-1 w-52 rounded-lg border border-gray-700 bg-gray-900 py-1 shadow-xl">
@@ -77,7 +77,7 @@ export default function Header() {
               onClick={() => { setSectorOpen(!sectorOpen); setClassOpen(false); }}
               className={`rounded-md px-3 py-1.5 text-sm transition-colors ${isSector ? "bg-gray-800 text-white" : "text-gray-400 hover:text-white"}`}
             >
-              Sectors ▾
+              섹터 ▾
             </button>
             {sectorOpen && (
               <div className="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border border-gray-700 bg-gray-900 py-1 shadow-xl">
@@ -96,10 +96,10 @@ export default function Header() {
           </div>
 
           <Link href="/portfolio" className={`rounded-md px-3 py-1.5 text-sm transition-colors ${pathname === "/portfolio" ? "bg-gray-800 text-white" : "text-gray-400 hover:text-white"}`}>
-            Portfolio
+            포트폴리오
           </Link>
           <Link href="/compare" className={`rounded-md px-3 py-1.5 text-sm transition-colors ${pathname === "/compare" ? "bg-gray-800 text-white" : "text-gray-400 hover:text-white"}`}>
-            Compare
+            ETF vs 직접 투자
           </Link>
         </nav>
       </div>

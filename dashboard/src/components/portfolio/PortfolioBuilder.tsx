@@ -20,11 +20,11 @@ interface Props {
 }
 
 const RB_OPTIONS = [
-  { label: "None", days: 0 },
-  { label: "Monthly", days: 21 },
-  { label: "Quarterly", days: 63 },
-  { label: "Semi-Annual", days: 126 },
-  { label: "Annual", days: 252 },
+  { label: "없음", days: 0 },
+  { label: "월간", days: 21 },
+  { label: "분기", days: 63 },
+  { label: "반기", days: 126 },
+  { label: "연간", days: 252 },
 ];
 
 export default function PortfolioBuilder({ etfs, spyData, riskFreeRate }: Props) {
@@ -121,9 +121,9 @@ export default function PortfolioBuilder({ etfs, spyData, riskFreeRate }: Props)
       {/* A. 비중 조정 슬라이더 */}
       <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-semibold">ETF Allocation</h2>
+          <h2 className="font-semibold">ETF 비중</h2>
           <button onClick={equalWeight} className="rounded bg-gray-800 px-3 py-1 text-xs text-gray-300 hover:text-white">
-            Equal Weight
+            균등 배분
           </button>
         </div>
         <div className="space-y-2">
@@ -148,21 +148,21 @@ export default function PortfolioBuilder({ etfs, spyData, riskFreeRate }: Props)
       {/* B. 백테스트 + C. KPI */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-          <h2 className="mb-3 font-semibold">Portfolio vs SPY</h2>
+          <h2 className="mb-3 font-semibold">포트폴리오 vs S&P 500</h2>
           <DualLineChart
             dates={simulation.dates}
             seriesA={simulation.rebalancedValues}
             seriesB={simulation.spyValues}
-            labelA="Portfolio"
-            labelB="SPY"
+            labelA="포트폴리오"
+            labelB="SPY (S&P 500)"
           />
         </section>
         <section className="grid grid-cols-2 gap-3">
           {[
-            { label: "Ann. Return", value: `${(simulation.annReturn * 100).toFixed(1)}%`, positive: simulation.annReturn >= 0 },
-            { label: "Volatility", value: `${(simulation.vol * 100).toFixed(1)}%` },
-            { label: "Sharpe", value: simulation.sharpe.toFixed(2), positive: simulation.sharpe > 1 },
-            { label: "MDD", value: `${(simulation.mdd * 100).toFixed(1)}%` },
+            { label: "연환산 수익률", value: `${(simulation.annReturn * 100).toFixed(1)}%`, positive: simulation.annReturn >= 0 },
+            { label: "변동성", value: `${(simulation.vol * 100).toFixed(1)}%` },
+            { label: "샤프", value: simulation.sharpe.toFixed(2), positive: simulation.sharpe > 1 },
+            { label: "최대 낙폭", value: `${(simulation.mdd * 100).toFixed(1)}%` },
           ].map((kpi) => (
             <div key={kpi.label} className="rounded-lg border border-gray-800 bg-gray-900 p-4">
               <p className="text-xs text-gray-400">{kpi.label}</p>
@@ -177,7 +177,7 @@ export default function PortfolioBuilder({ etfs, spyData, riskFreeRate }: Props)
       {/* D. 리밸런싱 비교 */}
       <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-semibold">Rebalancing Comparison</h2>
+          <h2 className="font-semibold">리밸런싱 비교</h2>
           <div className="flex gap-1">
             {RB_OPTIONS.map((opt, i) => (
               <button
@@ -194,8 +194,8 @@ export default function PortfolioBuilder({ etfs, spyData, riskFreeRate }: Props)
           dates={simulation.dates}
           seriesA={simulation.rebalancedValues}
           seriesB={simulation.buyHoldValues}
-          labelA="Rebalanced"
-          labelB="Buy & Hold"
+          labelA="리밸런싱"
+          labelB="바이앤홀드"
         />
       </section>
     </div>

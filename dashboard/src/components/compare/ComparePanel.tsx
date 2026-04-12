@@ -15,9 +15,9 @@ interface Props {
 
 const STOCK_COUNTS = [3, 5, 10] as const;
 const RB_OPTIONS = [
-  { label: "None", value: "none" as const },
-  { label: "Monthly", value: "monthly" as const },
-  { label: "Quarterly", value: "quarterly" as const },
+  { label: "없음", value: "none" as const },
+  { label: "월간", value: "monthly" as const },
+  { label: "분기", value: "quarterly" as const },
 ];
 const PERIOD_OPTIONS = [
   { label: "1Y", days: 252 },
@@ -115,7 +115,7 @@ export default function ComparePanel({ sectors, metadata, riskFreeRate }: Props)
     };
   }, [sector, stockCount, rbIdx, periodIdx, riskFreeRate, periodDays, rbPeriod]);
 
-  if (!sector) return <p className="text-gray-500">No data</p>;
+  if (!sector) return <p className="text-gray-500">데이터 없음</p>;
 
   return (
     <div className="space-y-6">
@@ -123,7 +123,7 @@ export default function ComparePanel({ sectors, metadata, riskFreeRate }: Props)
       <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <div>
-            <label className="text-xs text-gray-400">Sector</label>
+            <label className="text-xs text-gray-400">섹터</label>
             <select
               value={sectorIdx}
               onChange={(e) => setSectorIdx(Number(e.target.value))}
@@ -135,7 +135,7 @@ export default function ComparePanel({ sectors, metadata, riskFreeRate }: Props)
             </select>
           </div>
           <div>
-            <label className="text-xs text-gray-400">Top N Stocks</label>
+            <label className="text-xs text-gray-400">상위 N개 종목</label>
             <div className="mt-1 flex gap-1">
               {STOCK_COUNTS.map((n) => (
                 <button key={n} onClick={() => setStockCount(n)}
@@ -146,7 +146,7 @@ export default function ComparePanel({ sectors, metadata, riskFreeRate }: Props)
             </div>
           </div>
           <div>
-            <label className="text-xs text-gray-400">Rebalancing</label>
+            <label className="text-xs text-gray-400">리밸런싱</label>
             <div className="mt-1 flex gap-1">
               {RB_OPTIONS.map((o, i) => (
                 <button key={o.label} onClick={() => setRbIdx(i)}
@@ -157,7 +157,7 @@ export default function ComparePanel({ sectors, metadata, riskFreeRate }: Props)
             </div>
           </div>
           <div>
-            <label className="text-xs text-gray-400">Period</label>
+            <label className="text-xs text-gray-400">기간</label>
             <div className="mt-1 flex gap-1">
               {PERIOD_OPTIONS.map((o, i) => (
                 <button key={o.label} onClick={() => setPeriodIdx(i)}
@@ -178,57 +178,57 @@ export default function ComparePanel({ sectors, metadata, riskFreeRate }: Props)
               <h2 className="mb-3 text-sm font-semibold text-blue-400">ETF ({sector.etfTicker})</h2>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { label: "Return", value: `${(sim.etfMetrics.ret * 100).toFixed(1)}%` },
-                  { label: "Volatility", value: `${(sim.etfMetrics.vol * 100).toFixed(1)}%` },
-                  { label: "Sharpe", value: sim.etfMetrics.sharpe.toFixed(2) },
-                  { label: "MDD", value: `${(sim.etfMetrics.mdd * 100).toFixed(1)}%` },
+                  { label: "수익률", value: `${(sim.etfMetrics.ret * 100).toFixed(1)}%` },
+                  { label: "변동성", value: `${(sim.etfMetrics.vol * 100).toFixed(1)}%` },
+                  { label: "샤프", value: sim.etfMetrics.sharpe.toFixed(2) },
+                  { label: "최대 낙폭", value: `${(sim.etfMetrics.mdd * 100).toFixed(1)}%` },
                 ].map((k) => (
                   <div key={k.label}><p className="text-xs text-gray-400">{k.label}</p><p className="text-lg font-bold">{k.value}</p></div>
                 ))}
               </div>
-              <p className="mt-2 text-xs text-gray-500">Total cost: ${sim.etfTotalCost.toFixed(0)}</p>
+              <p className="mt-2 text-xs text-gray-500">총 비용: ${sim.etfTotalCost.toFixed(0)}</p>
             </section>
             <section className="rounded-lg border border-orange-900/50 bg-gray-900 p-4">
-              <h2 className="mb-3 text-sm font-semibold text-orange-400">Direct (Top {stockCount})</h2>
+              <h2 className="mb-3 text-sm font-semibold text-orange-400">직접 투자 (상위 {stockCount}개)</h2>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { label: "Return", value: `${(sim.directMetrics.ret * 100).toFixed(1)}%` },
-                  { label: "Volatility", value: `${(sim.directMetrics.vol * 100).toFixed(1)}%` },
-                  { label: "Sharpe", value: sim.directMetrics.sharpe.toFixed(2) },
-                  { label: "MDD", value: `${(sim.directMetrics.mdd * 100).toFixed(1)}%` },
+                  { label: "수익률", value: `${(sim.directMetrics.ret * 100).toFixed(1)}%` },
+                  { label: "변동성", value: `${(sim.directMetrics.vol * 100).toFixed(1)}%` },
+                  { label: "샤프", value: sim.directMetrics.sharpe.toFixed(2) },
+                  { label: "최대 낙폭", value: `${(sim.directMetrics.mdd * 100).toFixed(1)}%` },
                 ].map((k) => (
                   <div key={k.label}><p className="text-xs text-gray-400">{k.label}</p><p className="text-lg font-bold">{k.value}</p></div>
                 ))}
               </div>
-              <p className="mt-2 text-xs text-gray-500">Total cost: ${sim.directTotalCost.toFixed(0)}</p>
+              <p className="mt-2 text-xs text-gray-500">총 비용: ${sim.directTotalCost.toFixed(0)}</p>
             </section>
           </div>
 
           {/* C. 누적 수익률 비교 */}
           <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-            <h2 className="mb-3 font-semibold">Cumulative Value Comparison</h2>
-            <DualLineChart dates={sim.dates} seriesA={sim.etfValues} seriesB={sim.directValues} labelA="ETF" labelB="Direct" />
+            <h2 className="mb-3 font-semibold">누적 가치 비교</h2>
+            <DualLineChart dates={sim.dates} seriesA={sim.etfValues} seriesB={sim.directValues} labelA="ETF" labelB="직접 투자" />
           </section>
 
           {/* E. 지표별 비교 */}
           <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-            <h2 className="mb-3 font-semibold">Metrics Comparison</h2>
+            <h2 className="mb-3 font-semibold">지표 비교</h2>
             <GroupedBarChart
               data={[
-                { label: "Return%", etf: +(sim.etfMetrics.ret * 100).toFixed(1), direct: +(sim.directMetrics.ret * 100).toFixed(1) },
-                { label: "Vol%", etf: +(sim.etfMetrics.vol * 100).toFixed(1), direct: +(sim.directMetrics.vol * 100).toFixed(1) },
-                { label: "Sharpe", etf: +sim.etfMetrics.sharpe.toFixed(2), direct: +sim.directMetrics.sharpe.toFixed(2) },
-                { label: "MDD%", etf: +(sim.etfMetrics.mdd * 100).toFixed(1), direct: +(sim.directMetrics.mdd * 100).toFixed(1) },
+                { label: "수익률 %", etf: +(sim.etfMetrics.ret * 100).toFixed(1), direct: +(sim.directMetrics.ret * 100).toFixed(1) },
+                { label: "변동성 %", etf: +(sim.etfMetrics.vol * 100).toFixed(1), direct: +(sim.directMetrics.vol * 100).toFixed(1) },
+                { label: "샤프", etf: +sim.etfMetrics.sharpe.toFixed(2), direct: +sim.directMetrics.sharpe.toFixed(2) },
+                { label: "낙폭 %", etf: +(sim.etfMetrics.mdd * 100).toFixed(1), direct: +(sim.directMetrics.mdd * 100).toFixed(1) },
               ]}
             />
           </section>
 
           {/* F. 직접투자 포트폴리오 구성 */}
           <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-            <h2 className="mb-3 font-semibold">Direct Portfolio Holdings</h2>
+            <h2 className="mb-3 font-semibold">직접 투자 포트폴리오 구성</h2>
             <table className="w-full text-left text-sm">
               <thead className="border-b border-gray-700 text-xs text-gray-400">
-                <tr><th className="pb-2">Ticker</th><th className="pb-2 text-right">Weight</th><th className="pb-2 text-right">Return</th><th className="pb-2 text-right">Contribution</th></tr>
+                <tr><th className="pb-2">종목</th><th className="pb-2 text-right">비중</th><th className="pb-2 text-right">수익률</th><th className="pb-2 text-right">기여도</th></tr>
               </thead>
               <tbody>
                 {sim.holdings.map((h) => (
