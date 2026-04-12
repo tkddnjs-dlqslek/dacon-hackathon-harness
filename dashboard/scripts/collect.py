@@ -89,16 +89,43 @@ DETAIL_ASSETS = {
         "^IXIC":  {"name": "Nasdaq",        "region": "US",    "currency": "USD"},
         "^DJI":   {"name": "Dow Jones",     "region": "US",    "currency": "USD"},
         "^RUT":   {"name": "Russell 2000",  "region": "US",    "currency": "USD"},
-        "^KS11":  {"name": "KOSPI",         "region": "KR",    "currency": "KRW"},
-        "^N225":  {"name": "Nikkei 225",    "region": "JP",    "currency": "JPY"},
-        "^HSI":   {"name": "Hang Seng",     "region": "HK",    "currency": "HKD"},
+        "^KS11":  {"name": "KOSPI (코스피)",     "region": "KR", "currency": "KRW"},
+        "^KQ11":  {"name": "KOSDAQ (코스닥)",    "region": "KR", "currency": "KRW"},
+        "^N225":  {"name": "Nikkei 225 (닛케이)","region": "JP", "currency": "JPY"},
+        "^HSI":   {"name": "Hang Seng (항셍)",  "region": "HK", "currency": "HKD"},
         "^FTSE":  {"name": "FTSE 100",      "region": "UK",    "currency": "GBP"},
         "^GDAXI": {"name": "DAX",           "region": "DE",    "currency": "EUR"},
         "^FCHI":  {"name": "CAC 40",        "region": "FR",    "currency": "EUR"},
         "^STOXX50E": {"name": "Euro Stoxx 50", "region": "EU", "currency": "EUR"},
-        "^VIX":   {"name": "VIX",           "region": "US",    "currency": "USD"},
+        "^VIX":   {"name": "VIX (변동성 지수)", "region": "US", "currency": "USD"},
     },
 }
+
+# ── 한국 주식 (코스피 시총 상위) ─────────────────────
+KOREAN_STOCKS = {
+    "005930.KS": {"name": "삼성전자",         "sector": "Technology",       "currency": "KRW"},
+    "000660.KS": {"name": "SK하이닉스",       "sector": "Technology",       "currency": "KRW"},
+    "035420.KS": {"name": "NAVER",            "sector": "Communication",    "currency": "KRW"},
+    "035720.KS": {"name": "카카오",           "sector": "Communication",    "currency": "KRW"},
+    "005380.KS": {"name": "현대차",           "sector": "Consumer Disc.",   "currency": "KRW"},
+    "000270.KS": {"name": "기아",             "sector": "Consumer Disc.",   "currency": "KRW"},
+    "051910.KS": {"name": "LG화학",           "sector": "Materials",        "currency": "KRW"},
+    "006400.KS": {"name": "삼성SDI",          "sector": "Technology",       "currency": "KRW"},
+    "207940.KS": {"name": "삼성바이오로직스", "sector": "Healthcare",       "currency": "KRW"},
+    "068270.KS": {"name": "셀트리온",         "sector": "Healthcare",       "currency": "KRW"},
+    "105560.KS": {"name": "KB금융",           "sector": "Financials",       "currency": "KRW"},
+    "055550.KS": {"name": "신한지주",         "sector": "Financials",       "currency": "KRW"},
+    "086790.KS": {"name": "하나금융지주",     "sector": "Financials",       "currency": "KRW"},
+    "012330.KS": {"name": "현대모비스",       "sector": "Consumer Disc.",   "currency": "KRW"},
+    "028260.KS": {"name": "삼성물산",         "sector": "Industrials",      "currency": "KRW"},
+    "066570.KS": {"name": "LG전자",           "sector": "Technology",       "currency": "KRW"},
+    "003550.KS": {"name": "LG",               "sector": "Industrials",      "currency": "KRW"},
+    "017670.KS": {"name": "SK텔레콤",         "sector": "Communication",    "currency": "KRW"},
+    "030200.KS": {"name": "KT",               "sector": "Communication",    "currency": "KRW"},
+    "015760.KS": {"name": "한국전력",         "sector": "Utilities",        "currency": "KRW"},
+}
+
+DETAIL_ASSETS["equity_etf"].update(KOREAN_STOCKS)
 
 # ── 2. Universe tier (S&P 500 + 추가 인기 종목) ───────
 
@@ -257,7 +284,7 @@ def collect_etf_metadata(assets):
     print("\n[2/5] ETF metadata...")
     result = []
     spdr_etfs = [a for a in assets if a["assetType"] == "equity_etf"
-                 and a["ticker"] not in ("SPY", "QQQ", "DIA", "IWM", "VTI")]
+                 and a["ticker"].startswith("XL")]  # SPDR Select Sector ETFs only
 
     for etf in spdr_etfs:
         ticker = etf["ticker"]

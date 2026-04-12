@@ -30,7 +30,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-gray-950 text-gray-100">
         <Header />
-        <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-6">
+        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 md:px-6">
           {children}
         </main>
         <footer className="border-t border-gray-800 px-6 py-3 text-center text-xs text-gray-500">

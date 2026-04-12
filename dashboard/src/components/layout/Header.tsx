@@ -36,12 +36,12 @@ export default function Header() {
   const isAssetClass = pathname.startsWith("/asset-class");
 
   return (
-    <header className="border-b border-gray-800 bg-gray-950 px-6 py-3">
-      <div className="mx-auto flex max-w-7xl items-center justify-between">
-        <Link href="/" className="text-lg font-bold text-white">
-          멀티 에셋 투자 분석 (Multi-Asset Analytics)
+    <header className="border-b border-gray-800 bg-gray-950 px-4 py-3 md:px-6">
+      <div className="mx-auto flex max-w-7xl flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <Link href="/" className="text-base font-bold text-white md:text-lg">
+          멀티 에셋 투자 분석
         </Link>
-        <nav className="flex items-center gap-1">
+        <nav className="flex flex-wrap items-center gap-1">
           <Link href="/" className={`rounded-md px-3 py-1.5 text-sm transition-colors ${pathname === "/" ? "bg-gray-800 text-white" : "text-gray-400 hover:text-white"}`}>
             대시보드
           </Link>
@@ -99,7 +99,13 @@ export default function Header() {
             포트폴리오
           </Link>
           <Link href="/compare" className={`rounded-md px-3 py-1.5 text-sm transition-colors ${pathname === "/compare" ? "bg-gray-800 text-white" : "text-gray-400 hover:text-white"}`}>
-            ETF vs 직접 투자
+            ETF vs 직접
+          </Link>
+          <Link href="/multi-compare" className={`rounded-md px-3 py-1.5 text-sm transition-colors ${pathname === "/multi-compare" ? "bg-gray-800 text-white" : "text-gray-400 hover:text-white"}`}>
+            자산 비교
+          </Link>
+          <Link href="/search" className={`rounded-md px-3 py-1.5 text-sm transition-colors ${pathname === "/search" ? "bg-gray-800 text-white" : "text-gray-400 hover:text-white"}`}>
+            🔍 검색
           </Link>
         </nav>
       </div>
