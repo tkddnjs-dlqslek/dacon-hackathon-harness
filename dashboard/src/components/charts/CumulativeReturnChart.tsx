@@ -65,30 +65,39 @@ export default function CumulativeReturnChart({ dates, series, height = 300 }: P
   });
 
   // 네이티브 wheel 이벤트 (passive: false) — preventDefault로 페이지 스크롤 차단
-  // 마우스 포인터 위치를 기준점으로 줌
+  // 마우스 포인터 위치를 기준점으로 줌 (Recharts plot 영역을 DOM으로 직접 측정)
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-
-    // Recharts 플롯 영역 기준점 (YAxis width=50 + left margin=10, right margin=10)
-    const PLOT_LEFT = 60;
-    const PLOT_RIGHT = 10;
 
     const handleWheel = (e: WheelEvent) => {
       if (total < 30) return;
       e.preventDefault();
       e.stopPropagation();
 
-      // 마우스 위치 → 플롯 영역 내 비율 (0~1)
-      const rect = el.getBoundingClientRect();
-      const plotWidth = Math.max(1, rect.width - PLOT_LEFT - PLOT_RIGHT);
-      const mouseX = e.clientX - rect.left - PLOT_LEFT;
+      // Recharts가 실제 렌더한 plot 영역 (cartesian-grid)에서 정확한 좌표 읽기
+      // 마진 추정 대신 DOM 측정 → 플롯 좌측 끝부터 우측 끝까지 정확히
+      const grid = el.querySelector(".recharts-cartesian-grid") as SVGGElement | null;
+      let plotLeft: number;
+      let plotWidth: number;
+      if (grid) {
+        const r = grid.getBoundingClientRect();
+        plotLeft = r.left;
+        plotWidth = r.width;
+      } else {
+        // fallback (초기 렌더 전)
+        const r = el.getBoundingClientRect();
+        plotLeft = r.left + 60;
+        plotWidth = Math.max(1, r.width - 70);
+      }
+
+      const mouseX = e.clientX - plotLeft;
       const mouseRatio = Math.max(0, Math.min(1, mouseX / plotWidth));
 
       setZoomRange((prev) => {
         const [s, en] = prev ?? [0, total];
         const visible = en - s;
-        // 마우스가 가리키는 데이터 인덱스 (소수 포함)
+        // 마우스가 가리키는 데이터 인덱스 (소수 포함, 사용 후 보존됨)
         const anchorIdx = s + mouseRatio * visible;
 
         let newVisible: number;
@@ -101,10 +110,11 @@ export default function CumulativeReturnChart({ dates, series, height = 300 }: P
           if (newVisible >= total) return null;
         }
 
-        // 마우스 위치의 데이터 인덱스가 그대로 유지되도록 새 start 계산
+        // 새 start: anchorIdx가 같은 mouseRatio 위치에 있도록
         // newStart + mouseRatio * newVisible = anchorIdx
-        let newStart = Math.round(anchorIdx - mouseRatio * newVisible);
-        newStart = Math.max(0, Math.min(total - newVisible, newStart));
+        let newStartFloat = anchorIdx - mouseRatio * newVisible;
+        newStartFloat = Math.max(0, Math.min(total - newVisible, newStartFloat));
+        const newStart = Math.round(newStartFloat);
         const newEnd = newStart + newVisible;
         return [newStart, newEnd];
       });
