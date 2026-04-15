@@ -4,7 +4,7 @@
 // 마우스 휠로 가로 확대/축소 + 색상 다중 fallback 매핑
 
 import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from "recharts";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { AssetType } from "@/types";
 import { SECTOR_COLORS, ASSET_CLASS_COLORS, ASSET_CLASS_LABELS } from "@/types";
 
@@ -64,32 +64,43 @@ export default function CumulativeReturnChart({ dates, series, height = 300 }: P
     return point;
   });
 
-  const handleWheel = (e: React.WheelEvent) => {
-    if (total < 30) return;
-    e.preventDefault();
-    e.stopPropagation();
+  // 네이티브 wheel 이벤트 (passive: false) — preventDefault로 페이지 스크롤 차단
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
 
-    const visible = end - start;
-    const center = Math.floor((start + end) / 2);
+    const handleWheel = (e: WheelEvent) => {
+      if (total < 30) return;
+      e.preventDefault();
+      e.stopPropagation();
 
-    if (e.deltaY < 0) {
-      // 줌 인 (확대)
-      const newVisible = Math.max(20, Math.floor(visible * 0.8));
-      const newStart = Math.max(0, center - Math.floor(newVisible / 2));
-      const newEnd = Math.min(total, newStart + newVisible);
-      setZoomRange([newStart, newEnd]);
-    } else {
-      // 줌 아웃 (축소)
-      const newVisible = Math.floor(visible * 1.25);
-      if (newVisible >= total) {
-        setZoomRange(null);
-      } else {
-        const newStart = Math.max(0, center - Math.floor(newVisible / 2));
-        const newEnd = Math.min(total, newStart + newVisible);
-        setZoomRange([newStart, newEnd]);
-      }
-    }
-  };
+      setZoomRange((prev) => {
+        const [s, en] = prev ?? [0, total];
+        const visible = en - s;
+        const center = Math.floor((s + en) / 2);
+
+        if (e.deltaY < 0) {
+          // 줌 인 (확대)
+          const newVisible = Math.max(20, Math.floor(visible * 0.8));
+          const newStart = Math.max(0, center - Math.floor(newVisible / 2));
+          const newEnd = Math.min(total, newStart + newVisible);
+          return [newStart, newEnd];
+        } else {
+          // 줌 아웃 (축소)
+          const newVisible = Math.floor(visible * 1.25);
+          if (newVisible >= total) {
+            return null;
+          }
+          const newStart = Math.max(0, center - Math.floor(newVisible / 2));
+          const newEnd = Math.min(total, newStart + newVisible);
+          return [newStart, newEnd];
+        }
+      });
+    };
+
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => el.removeEventListener("wheel", handleWheel);
+  }, [total]);
 
   // X축 라벨 간격
   const tickInterval = Math.max(1, Math.floor(slicedDates.length / 12));
@@ -97,7 +108,7 @@ export default function CumulativeReturnChart({ dates, series, height = 300 }: P
   const zoomPercent = isZoomed ? Math.round((slicedDates.length / total) * 100) : 100;
 
   return (
-    <div className="relative" ref={containerRef} onWheel={handleWheel}>
+    <div className="relative" ref={containerRef}>
       <div className="absolute right-2 top-2 z-10 flex items-center gap-2">
         {isZoomed && (
           <>
