@@ -125,6 +125,7 @@ export default function SearchPage() {
       return {
         ticker: a.ticker,
         sector: ASSET_CLASS_LABELS[a.assetType],
+        color: ASSET_CLASS_COLORS[a.assetType],
         cumulativeReturns: sliced.map((d) => d.close / base - 1),
       };
     });

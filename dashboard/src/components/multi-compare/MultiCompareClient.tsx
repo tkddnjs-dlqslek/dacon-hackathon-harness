@@ -118,6 +118,7 @@ export default function MultiCompareClient({ assets }: Props) {
       return {
         ticker: a.ticker,
         sector: ASSET_CLASS_LABELS[a.assetType],
+        color: ASSET_CLASS_COLORS[a.assetType],
         cumulativeReturns: data.map((d) => d.close / base - 1),
       };
     });
