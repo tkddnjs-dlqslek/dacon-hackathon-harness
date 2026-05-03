@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 // 포트폴리오 비중 조정 + 백테스트 + 리밸런싱 — 인터랙티브 클라이언트 컴포넌트
 
@@ -7,6 +7,22 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { DualLineChart } from "@/components/charts";
 import type { OHLCV } from "@/types";
 import { SECTOR_COLORS } from "@/types";
+
+// ETF 티커 → 섹터 매핑 (SECTOR_COLORS 키와 일치해야 함)
+const ETF_SECTOR: Record<string, string> = {
+  XLK: "Technology", XLE: "Energy", XLV: "Healthcare", XLF: "Financials",
+  XLY: "Consumer Disc.", XLI: "Industrials", XLRE: "Real Estate",
+  XLU: "Utilities", XLP: "Consumer Staples", XLB: "Materials", XLC: "Communication",
+  QQQ: "Technology", DIA: "Benchmark", IWM: "Benchmark", VTI: "Benchmark", SPY: "Benchmark",
+};
+
+// 섹터 한국어 표시명
+const SECTOR_KO: Record<string, string> = {
+  Technology: "기술", Energy: "에너지", Healthcare: "헬스케어", Financials: "금융",
+  "Consumer Disc.": "임의소비재", Industrials: "산업재", "Real Estate": "부동산",
+  Utilities: "유틸리티", "Consumer Staples": "필수소비재", Materials: "소재",
+  Communication: "통신", Benchmark: "벤치마크",
+};
 
 interface ETFInput {
   ticker: string;
@@ -176,45 +192,59 @@ export default function PortfolioBuilder({ etfs, spyData, riskFreeRate }: Props)
   return (
     <div className="space-y-6">
       {/* A. 비중 조정 슬라이더 */}
-      <section className="relative rounded-lg border border-gray-800 bg-gray-900 p-4">
+      <section className="relative rounded-lg border border-gray-200 bg-gray-50 p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="font-semibold">ETF 비중</h2>
           <div className="flex gap-2">
-            <button onClick={equalWeight} className="rounded bg-gray-800 px-3 py-1 text-xs text-gray-300 hover:text-white">
+            <button onClick={equalWeight} className="rounded bg-gray-100 px-3 py-1 text-xs text-gray-600 hover:text-gray-900">
               균등 배분
             </button>
-            <button onClick={handleShare} className="rounded bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-500">
+            <button onClick={handleShare} className="rounded bg-gray-900 px-3 py-1 text-xs text-white hover:bg-gray-700">
               🔗 링크 공유
             </button>
           </div>
         </div>
         {shareToast && (
-          <div className="absolute right-4 top-12 z-10 rounded bg-green-700 px-3 py-1 text-xs text-white shadow-lg">
+          <div className="absolute right-4 top-12 z-10 rounded bg-green-600 px-3 py-1 text-xs text-white shadow-lg">
             URL이 클립보드에 복사되었습니다
           </div>
         )}
         <div className="space-y-2">
-          {etfs.map((etf, i) => (
+          {etfs.map((etf, i) => {
+            const sectorKey = ETF_SECTOR[etf.ticker] ?? etf.sector;
+            const sliderColor = SECTOR_COLORS[sectorKey] ?? "#94A3B8";
+            const pct = Math.round(weights[i] * 100);
+            return (
             <div key={etf.ticker} className="flex items-center gap-3">
-              <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: SECTOR_COLORS[etf.sector] ?? "#94A3B8" }} />
-              <span className="w-12 text-sm font-mono">{etf.ticker}</span>
+              <div className="h-3 w-3 shrink-0 rounded-sm" style={{ backgroundColor: sliderColor }} />
+              <div className="w-28 shrink-0">
+                <span className="block text-sm font-mono font-bold">{etf.ticker}</span>
+                <span className="block text-[10px] text-gray-400 truncate">{SECTOR_KO[sectorKey] ?? sectorKey}</span>
+              </div>
               <input
                 type="range"
                 min={0}
                 max={100}
-                value={Math.round(weights[i] * 100)}
+                value={pct}
                 onChange={(e) => setWeight(i, Number(e.target.value) / 100)}
-                className="flex-1 accent-blue-500"
+                className="min-w-0 flex-1"
+                style={{
+                  "--slider-fill": sliderColor,
+                  "--slider-pct": `${pct}%`,
+                  accentColor: sliderColor,
+                  color: sliderColor,
+                } as React.CSSProperties}
               />
-              <span className="w-12 text-right text-sm font-mono">{(weights[i] * 100).toFixed(0)}%</span>
+              <span className="w-10 shrink-0 text-right text-sm font-mono">{pct}%</span>
             </div>
-          ))}
+          );
+          })}
         </div>
       </section>
 
       {/* B. 백테스트 + C. KPI */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+        <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
           <h2 className="mb-3 font-semibold">포트폴리오 vs S&P 500</h2>
           <DualLineChart
             dates={simulation.dates}
@@ -231,9 +261,9 @@ export default function PortfolioBuilder({ etfs, spyData, riskFreeRate }: Props)
             { label: "샤프", value: simulation.sharpe.toFixed(2), positive: simulation.sharpe > 1 },
             { label: "최대 낙폭", value: `${(simulation.mdd * 100).toFixed(1)}%` },
           ].map((kpi) => (
-            <div key={kpi.label} className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-              <p className="text-xs text-gray-400">{kpi.label}</p>
-              <p className={`mt-1 text-2xl font-bold ${kpi.positive ? "text-green-400" : kpi.value.startsWith("-") ? "text-red-400" : "text-white"}`}>
+            <div key={kpi.label} className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <p className="text-xs text-gray-500">{kpi.label}</p>
+              <p className={`mt-1 text-2xl font-bold ${kpi.positive ? "text-green-400" : kpi.value.startsWith("-") ? "text-red-400" : "text-gray-900"}`}>
                 {kpi.value}
               </p>
             </div>
@@ -242,7 +272,7 @@ export default function PortfolioBuilder({ etfs, spyData, riskFreeRate }: Props)
       </div>
 
       {/* D. 리밸런싱 비교 */}
-      <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+      <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="font-semibold">리밸런싱 비교</h2>
           <div className="flex gap-1">
@@ -250,7 +280,7 @@ export default function PortfolioBuilder({ etfs, spyData, riskFreeRate }: Props)
               <button
                 key={opt.label}
                 onClick={() => setRbIndex(i)}
-                className={`rounded px-2 py-1 text-xs ${i === rbIndex ? "bg-blue-600 text-white" : "text-gray-400 hover:bg-gray-800 hover:text-white"}`}
+                className={`rounded px-2 py-1 text-xs ${i === rbIndex ? "bg-gray-900 text-white" : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"}`}
               >
                 {opt.label}
               </button>

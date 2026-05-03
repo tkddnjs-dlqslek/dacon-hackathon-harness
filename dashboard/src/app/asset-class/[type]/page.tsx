@@ -1,4 +1,4 @@
-// 자산 클래스별 깊이 분석 (/asset-class/[type])
+﻿// 자산 클래스별 깊이 분석 (/asset-class/[type])
 // 자산 타입 프로파일에 따라 지표·해석이 자동으로 달라짐
 
 import { loadAllAssets } from "@/lib/load-server-data";
@@ -12,6 +12,22 @@ import { notFound } from "next/navigation";
 interface PageProps {
   params: Promise<{ type: string }>;
 }
+
+const METRIC_TOOLTIPS: Record<string, string> = {
+  return: "기간 수익률: (현재가 − 시작가) / 시작가",
+  volatility: "연환산 변동성: 일간 수익률 표준편차 × √252. 수치가 클수록 가격 변동이 큼",
+  mdd: "최대 낙폭(MDD): 고점 대비 최대 하락률. −20%이면 고점에서 20% 하락한 적 있다는 뜻",
+  sharpe: "샤프 비율: (수익률 − 무위험이자율) / 변동성. 1.0 이상이면 위험 대비 수익이 양호",
+  beta: "베타: 시장(S&P 500) 대비 민감도. 1.0 = 시장과 동일 움직임, 2.0 = 시장 2배 변동",
+  currentYield: "채권 수익률: 현재 만기 수익률 (%)",
+  yieldChange: "금리 변화: 1년간 금리 변화량 (베이시스 포인트, 100bps = 1%)",
+  rateChange: "환율 변화율: 1년간 환율 등락 비율",
+  range52w: "52주 범위: 최근 1년간 최저가 ~ 최고가 구간",
+  stockCorr: "주식 상관계수: S&P 500과의 상관도 (−1~+1). 0에 가까울수록 분산 효과 높음",
+  inflationHedge: "인플레이션 헤지 점수: 주식과 음의 상관 → 인플레이션 방어 효과",
+  btcCorr: "BTC 상관계수: 비트코인과의 동조화 정도",
+  globalCorr: "글로벌 상관계수: S&P 500과의 동조화 정도",
+};
 
 // 자산 타입별 지표 계산 (프로파일 기반)
 function computeProfileMetrics(asset: Asset, profile: typeof ASSET_PROFILES[AssetType], allAssets: Asset[]) {
@@ -126,18 +142,24 @@ export default async function AssetClassPage({ params }: PageProps) {
 
   const profile = ASSET_PROFILES[assetType];
   const allAssets = await loadAllAssets();
-  const assets = allAssets.filter((a) => a.assetType === assetType);
+  // .KS/.KQ 한국 종목 제외, 비표준 티커 제외
+  const assets = allAssets.filter((a) => a.assetType === assetType && !a.ticker.includes("."));
 
   if (assets.length === 0) {
-    return <div className="py-12 text-center text-gray-500">No data for {profile.label}</div>;
+    return <div className="py-12 text-center text-gray-500">{ASSET_CLASS_LABELS[assetType]} 데이터가 없습니다.</div>;
   }
 
   const color = ASSET_CLASS_COLORS[assetType];
 
-  // 누적 수익률 차트 데이터
-  const minLen = Math.min(...assets.map((a) => a.data.length));
-  const chartDates = assets[0].data.slice(-minLen).map((d) => d.date);
-  const chartSeries = assets.map((a) => {
+  // 누적 수익률 차트 — equity_etf는 ETF만(XL*, SPY, QQQ 등), 최대 12개
+  const isEquity = assetType === "equity_etf";
+  const ETF_PREFIXES = ["XL", "SPY", "QQQ", "DIA", "IWM", "VTI", "GLD", "SLV", "USO", "BTC", "ETH"];
+  const chartAssets = isEquity
+    ? assets.filter((a) => ETF_PREFIXES.some((p) => a.ticker.startsWith(p))).slice(0, 12)
+    : assets.slice(0, 12);
+  const minLen = Math.min(...chartAssets.map((a) => a.data.length));
+  const chartDates = chartAssets[0].data.slice(-minLen).map((d) => d.date);
+  const chartSeries = chartAssets.map((a) => {
     const sliced = a.data.slice(-minLen);
     const base = sliced[0]?.close ?? 1;
     return {
@@ -157,40 +179,45 @@ export default async function AssetClassPage({ params }: PageProps) {
 
   return (
     <div className="space-y-6">
-      <div className="text-sm text-gray-400">
+      <div className="text-sm text-gray-500">
         대시보드 &gt;{" "}
-        <span className="text-white">{profile.label}</span>
+        <span className="text-gray-900">{ASSET_CLASS_LABELS[assetType]}</span>
       </div>
 
       {/* 헤더 */}
       <header className="rounded-lg border-2 p-6" style={{ borderColor: color, backgroundColor: `${color}10` }}>
         <div className="flex items-center gap-3">
           <div className="h-4 w-4 rounded" style={{ backgroundColor: color }} />
-          <h1 className="text-2xl font-bold">{profile.label}</h1>
-          <span className="rounded-full bg-gray-800 px-3 py-1 text-xs text-gray-400">{assets.length}개 자산</span>
+          <h1 className="text-2xl font-bold">{ASSET_CLASS_LABELS[assetType]}</h1>
+          <span className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-500">{assets.length}개 자산</span>
         </div>
-        <p className="mt-2 text-sm text-gray-400">{profile.description}</p>
+        <p className="mt-2 text-sm text-gray-500">{profile.description}</p>
         <p className="mt-1 text-xs text-gray-500">
-          표시 모드: <span className="font-mono">{profile.valueMode}</span> · 표시 단위: {profile.valueLabel}
+          표시 모드: <span className="font-mono">{profile.valueMode === "price" ? "가격" : profile.valueMode === "yield" ? "수익률" : "환율"}</span> · 표시 단위: {profile.valueLabel}
           {profile.valueUnit && ` (${profile.valueUnit})`}
         </p>
       </header>
 
       {/* 자산 타입별 적용 지표 (Skills 기반) */}
-      <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-        <h2 className="mb-3 text-sm font-semibold text-gray-400">적용 가능한 지표 (data-analysis.md §3 기반)</h2>
+      <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+        <h2 className="mb-1 text-sm font-semibold text-gray-500">적용 가능한 지표 (data-analysis.md §3 기반)</h2>
+        <p className="mb-2 text-xs text-gray-400">지표 위에 마우스를 올리면 설명이 표시됩니다.</p>
         <div className="flex flex-wrap gap-2">
           {profile.metrics.map((m) => (
-            <span key={m.key} className="rounded-full border border-gray-700 px-3 py-1 text-xs text-gray-300">
+            <span
+              key={m.key}
+              title={METRIC_TOOLTIPS[m.key]}
+              className="cursor-help rounded-full border border-gray-200 px-3 py-1 text-xs text-gray-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+            >
               {m.label}
-              {m.unit && <span className="ml-1 text-gray-500">[{m.unit}]</span>}
+              {m.unit && <span className="ml-1 text-gray-400">[{m.unit}]</span>}
             </span>
           ))}
         </div>
       </section>
 
       {/* 누적 수익률 차트 */}
-      <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+      <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
         <h2 className="mb-3 font-semibold">
           {profile.valueMode === "yield" ? "금리 변화 (1년)" : "누적 수익률 (1년)"}
         </h2>
@@ -198,11 +225,11 @@ export default async function AssetClassPage({ params }: PageProps) {
       </section>
 
       {/* 자산 테이블 — 프로파일에 정의된 지표만 표시 */}
-      <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+      <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
         <h2 className="mb-3 font-semibold">자산별 지표 (자산 타입 특화)</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-gray-700 text-xs text-gray-400">
+            <thead className="border-b border-gray-200 text-xs text-gray-500">
               <tr>
                 <th className="pb-2">종목</th>
                 <th className="pb-2">이름</th>
@@ -213,9 +240,9 @@ export default async function AssetClassPage({ params }: PageProps) {
             </thead>
             <tbody>
               {assetMetrics.map(({ asset, metrics }) => (
-                <tr key={asset.ticker} className="border-b border-gray-800">
+                <tr key={asset.ticker} className="border-b border-gray-200">
                   <td className="py-2 font-mono font-bold">{asset.ticker}</td>
-                  <td className="py-2 text-gray-400">{asset.name}</td>
+                  <td className="py-2 text-gray-500">{asset.name}</td>
                   {profile.metrics.map((m) => {
                     const value = metrics[m.key];
                     const formatted = formatMetricValue(m.key, value, m.unit);
@@ -223,8 +250,8 @@ export default async function AssetClassPage({ params }: PageProps) {
                     const colorClass =
                       isNumber && m.key === "return" ? (value as number) >= 0 ? "text-green-400" : "text-red-400"
                       : isNumber && m.key === "mdd" ? "text-red-400"
-                      : isNumber && (m.key === "sharpe" || m.key === "inflationHedge") ? (value as number) > 1 ? "text-green-400" : "text-gray-300"
-                      : "text-gray-300";
+                      : isNumber && (m.key === "sharpe" || m.key === "inflationHedge") ? (value as number) > 1 ? "text-green-400" : "text-gray-600"
+                      : "text-gray-600";
                     return (
                       <td key={m.key} className={`py-2 text-right font-mono ${colorClass}`}>
                         {formatted}
@@ -239,11 +266,11 @@ export default async function AssetClassPage({ params }: PageProps) {
       </section>
 
       {/* Skills.md 규칙 출처 */}
-      <section className="rounded-lg border border-gray-800 bg-gray-950 p-3 text-xs text-gray-500">
+      <section className="rounded-lg border border-gray-200 bg-white p-3 text-xs text-gray-500">
         <p>
-          <span className="text-gray-400">규칙 출처:</span>{" "}
-          이 페이지의 지표 선택은 <code className="text-blue-400">skills/data-analysis.md §3.{profile.type === "equity_etf" ? "1" : profile.type === "bond" ? "2" : profile.type === "fx" ? "3" : profile.type === "commodity" ? "4" : profile.type === "crypto" ? "5" : "6"}</code> ({profile.label})에서 정의되었습니다.
-          분석 모드: <code className="text-blue-400">{profile.valueMode}</code>.
+          <span className="text-gray-500">규칙 출처:</span>{" "}
+          이 페이지의 지표 선택은 <code className="text-gray-600">skills/data-analysis.md §3.{profile.type === "equity_etf" ? "1" : profile.type === "bond" ? "2" : profile.type === "fx" ? "3" : profile.type === "commodity" ? "4" : profile.type === "crypto" ? "5" : "6"}</code> ({ASSET_CLASS_LABELS[assetType]})에서 정의되었습니다.
+          분석 모드: <code className="text-gray-600">{profile.valueMode}</code>.
         </p>
       </section>
     </div>
