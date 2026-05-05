@@ -1,6 +1,6 @@
 # data-schema.md — 통일 데이터 스키마 & 어댑터 프로토콜
 
-## §0. 데이터 형식 구분
+## 0. 데이터 형식 구분
 
 이 시스템은 두 가지 데이터 형식을 동시에 처리한다:
 
@@ -14,7 +14,7 @@
 
 ---
 
-## §1. 통일 내부 스키마
+## 1. 통일 내부 스키마
 
 모든 입력 데이터는 다음 형식으로 변환되어 분석 엔진에 전달된다.
 
@@ -56,7 +56,7 @@ interface OHLCV {
 
 ---
 
-## §2. 어댑터 프로토콜
+## 2. 어댑터 프로토콜
 
 새로운 데이터 소스를 추가할 때 구현해야 할 인터페이스.
 
@@ -67,7 +67,7 @@ interface DataAdapter {
   name: string;                              // "yfinance", "csv", "krx" 등
   supportedTypes: AssetType[];               // 이 어댑터가 처리 가능한 자산 타입
   fetch(tickers: string[], period: string): Promise<Asset[]>;
-  validate(asset: Asset): ValidationResult;  // §4 데이터 품질 규칙 적용
+  validate(asset: Asset): ValidationResult;  // 4절 데이터 품질 규칙 적용
 }
 ```
 
@@ -90,7 +90,7 @@ interface DataAdapter {
 
 ---
 
-## §3. 자산 타입별 필수/선택 필드
+## 3. 자산 타입별 필수/선택 필드
 
 | 필드 | equity_etf | bond | fx | commodity | crypto | index |
 |------|:---------:|:----:|:--:|:---------:|:------:|:-----:|
@@ -107,7 +107,7 @@ interface DataAdapter {
 
 ---
 
-## §4. 데이터 품질 규칙
+## 4. 데이터 품질 규칙
 
 ### 4.1 결측치 처리
 
@@ -130,7 +130,7 @@ interface DataAdapter {
 
 ---
 
-## §5. 데이터 추가 가이드 (확장 시나리오)
+## 5. 데이터 추가 가이드 (확장 시나리오)
 
 ### 5.1 새 자산 추가 (기존 어댑터 활용)
 
