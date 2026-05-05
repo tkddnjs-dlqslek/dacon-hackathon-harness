@@ -49,29 +49,33 @@ export function cumulativeReturns(data: OHLCV[]): number[] {
 }
 
 // §2.1 연환산 수익률
-export function annualizedReturn(data: OHLCV[]): number {
+// crypto는 365거래일(24/7), 그 외 자산은 252거래일 기준
+export function annualizedReturn(data: OHLCV[], assetType?: AssetType): number {
   const totalReturn = data[data.length - 1].close / data[0].close - 1;
   const tradingDays = data.length;
-  return Math.pow(1 + totalReturn, 252 / tradingDays) - 1;
+  const annFactor = assetType === "crypto" ? 365 : 252;
+  return Math.pow(1 + totalReturn, annFactor / tradingDays) - 1;
 }
 
 // §2.1 변동성 (연환산)
-export function volatility(data: OHLCV[]): number {
+// crypto: √365 (24/7 거래) / 그 외: √252
+export function volatility(data: OHLCV[], assetType?: AssetType): number {
   const returns = dailyReturns(data);
   const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
   const variance = returns.reduce((sum, r) => sum + (r - mean) ** 2, 0) / (returns.length - 1);
-  return Math.sqrt(variance) * Math.sqrt(252);
+  const annFactor = assetType === "crypto" ? 365 : 252;
+  return Math.sqrt(variance) * Math.sqrt(annFactor);
 }
 
 // §2.1 샤프 비율
-export function sharpeRatio(data: OHLCV[], riskFreeRate: number): number {
-  const annReturn = annualizedReturn(data);
-  const vol = volatility(data);
+export function sharpeRatio(data: OHLCV[], riskFreeRate: number, assetType?: AssetType): number {
+  const annReturn = annualizedReturn(data, assetType);
+  const vol = volatility(data, assetType);
   if (vol === 0) return 0;
   return (annReturn - riskFreeRate) / vol;
 }
 
-// §2.1 최대 낙폭 (MDD)
+// 섹션 2.1 최대 낙폭 (MDD)
 export function maxDrawdown(data: OHLCV[]): number {
   let peak = data[0].close;
   let mdd = 0;
@@ -81,6 +85,50 @@ export function maxDrawdown(data: OHLCV[]): number {
     if (dd < mdd) mdd = dd;
   }
   return mdd;
+}
+
+// 섹션 7. KRW 환산 수익률 (서학개미 핵심 지표)
+// data-analysis.md 7절 — 달러 자산의 원화 실질 수익을 자산 기여 / 환율 기여 / 시너지로 분해
+export interface KRWBreakdown {
+  usdReturn: number;        // 달러 기준 자산 수익률
+  fxReturn: number;         // USD/KRW 환율 변동률
+  synergy: number;          // 교차항 (자산수익 × 환율변동)
+  krwReturn: number;        // 최종 KRW 환산 수익률
+}
+
+export function krwAdjustedReturn(
+  assetData: OHLCV[],
+  usdkrwData: OHLCV[],
+): KRWBreakdown {
+  if (assetData.length < 2 || usdkrwData.length < 2) {
+    return { usdReturn: 0, fxReturn: 0, synergy: 0, krwReturn: 0 };
+  }
+
+  // 두 시계열의 거래일 교집합 길이로 정렬
+  const len = Math.min(assetData.length, usdkrwData.length);
+  const a = assetData.slice(-len);
+  const fx = usdkrwData.slice(-len);
+
+  const usdReturn = a[len - 1].close / a[0].close - 1;
+  const fxReturn = fx[len - 1].close / fx[0].close - 1;
+  const synergy = usdReturn * fxReturn;
+  const krwReturn = (1 + usdReturn) * (1 + fxReturn) - 1;
+
+  return { usdReturn, fxReturn, synergy, krwReturn };
+}
+
+// 섹션 7.3 환율 헤지 비용 추정 (스프레드 0.5% 가정)
+export function fxHedgeCost(usdkrwData: OHLCV[], holdingDays: number): number {
+  const SPREAD = 0.005;
+  if (usdkrwData.length < 2) return SPREAD;
+
+  const fxRets = dailyReturns(usdkrwData);
+  const mean = fxRets.reduce((s, r) => s + r, 0) / fxRets.length;
+  const variance = fxRets.reduce((s, r) => s + (r - mean) ** 2, 0) / (fxRets.length - 1);
+  const fxVol = Math.sqrt(variance) * Math.sqrt(252);
+
+  // 보유기간 환율 리스크 + 스프레드
+  return SPREAD + fxVol * Math.sqrt(holdingDays / 252);
 }
 
 // §2.3 기간 필터
@@ -148,8 +196,8 @@ export function computeMetrics(
     ticker,
     assetType,
     returnPeriod: returnPeriod as Record<PeriodLabel, number>,
-    volatility: volatility(data),
-    sharpe: sharpeRatio(data, riskFreeRate),
+    volatility: volatility(data, assetType),
+    sharpe: sharpeRatio(data, riskFreeRate, assetType),
     mdd: maxDrawdown(data),
     beta: 0,
   };
@@ -182,9 +230,7 @@ export function computeMetricsWithBenchmark(
   riskFreeRate: number
 ): AssetMetrics {
   const metrics = computeMetrics(ticker, assetType, data, riskFreeRate);
-  const assetRet = dailyReturns(data);
-  const benchRet = dailyReturns(benchmarkData);
-  metrics.beta = beta(assetRet, benchRet);
+  metrics.beta = beta(dailyReturns(data), dailyReturns(benchmarkData));
   return metrics;
 }
 
@@ -205,7 +251,8 @@ export function correlationMatrix(allReturns: number[][]): number[][] {
 }
 
 // 공분산 행렬 (연환산)
-export function covarianceMatrix(allReturns: number[][]): number[][] {
+// annualizationFactor: 멀티 에셋 혼합 시 252 사용 (crypto 단독이면 365)
+export function covarianceMatrix(allReturns: number[][], annualizationFactor = 252): number[][] {
   const n = allReturns.length;
   const len = Math.min(...allReturns.map((r) => r.length));
   const trimmed = allReturns.map((r) => r.slice(-len));
@@ -218,7 +265,7 @@ export function covarianceMatrix(allReturns: number[][]): number[][] {
       for (let k = 0; k < len; k++) {
         cov += (trimmed[i][k] - means[i]) * (trimmed[j][k] - means[j]);
       }
-      const annualized = (cov / (len - 1)) * 252;
+      const annualized = (cov / (len - 1)) * annualizationFactor;
       matrix[i][j] = annualized;
       matrix[j][i] = annualized;
     }
