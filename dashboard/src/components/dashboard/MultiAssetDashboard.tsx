@@ -355,15 +355,39 @@ export default function MultiAssetDashboard({ assets, universe, insights }: Prop
         </section>
       )}
 
-      {/* 인사이트 배너 */}
-      <section className="flex gap-3 overflow-x-auto pb-2">
-        {insights.map((ins, i) => (
-          <div key={i} className={`min-w-[260px] rounded-lg border p-4 ${insightColors[ins.level]}`}>
-            <span className="text-xs font-bold opacity-70">{insightLabels[ins.level]}</span>
-            <p className="mt-1 text-sm">{ins.message}</p>
-          </div>
-        ))}
-      </section>
+      {/* 인사이트 배너 — 자산 클래스 필터에 반응 */}
+      {(() => {
+        const filteredInsights = insights.filter((ins) => {
+          // 특정 자산 클래스 한정 인사이트 → 그 클래스가 선택된 경우만 표시
+          if (ins.relatedAssetType) return selectedTypes.has(ins.relatedAssetType);
+          // 한정 없는 인사이트(크로스에셋, 매크로) → 항상 표시
+          return true;
+        });
+        const allClassesSelected = selectedTypes.size === ASSET_TYPES.length;
+        return (
+          <section>
+            {!allClassesSelected && (
+              <p className="mb-2 text-xs text-gray-500">
+                💡 인사이트는 선택한 자산 클래스 ({selectedTypes.size}개)만 표시 — 전체 보려면 모든 칩 활성화
+              </p>
+            )}
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {filteredInsights.length > 0 ? (
+                filteredInsights.map((ins, i) => (
+                  <div key={i} className={`min-w-[260px] rounded-lg border p-4 ${insightColors[ins.level]}`}>
+                    <span className="text-xs font-bold opacity-70">{insightLabels[ins.level]}</span>
+                    <p className="mt-1 text-sm">{ins.message}</p>
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-500">
+                  선택한 자산 클래스에 해당하는 인사이트가 없습니다.
+                </div>
+              )}
+            </div>
+          </section>
+        );
+      })()}
 
       {/* 요약 KPI */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">

@@ -45,7 +45,7 @@ function computeProfileMetrics(asset: Asset, profile: typeof ASSET_PROFILES[Asse
   result.volatility = vol;
   result.mdd = mdd;
 
-  // 자산 타입별 분기 (Skills.md §3 기반)
+  // 자산 타입별 분기 (Skills.md 3절 기반)
   switch (profile.type) {
     case "equity_etf": {
       const annRet = Math.pow(1 + ret, 252 / sliced.length) - 1;
@@ -200,7 +200,7 @@ export default async function AssetClassPage({ params }: PageProps) {
 
       {/* 자산 타입별 적용 지표 (Skills 기반) */}
       <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-        <h2 className="mb-1 text-sm font-semibold text-gray-500">적용 가능한 지표 (data-analysis.md §3 기반)</h2>
+        <h2 className="mb-1 text-sm font-semibold text-gray-500">적용 가능한 지표 (data-analysis.md 3절 기반)</h2>
         <p className="mb-2 text-xs text-gray-400">지표 위에 마우스를 올리면 설명이 표시됩니다.</p>
         <div className="flex flex-wrap gap-2">
           {profile.metrics.map((m) => (
@@ -269,7 +269,7 @@ export default async function AssetClassPage({ params }: PageProps) {
       <section className="rounded-lg border border-gray-200 bg-white p-3 text-xs text-gray-500">
         <p>
           <span className="text-gray-500">규칙 출처:</span>{" "}
-          이 페이지의 지표 선택은 <code className="text-gray-600">skills/data-analysis.md §3.{profile.type === "equity_etf" ? "1" : profile.type === "bond" ? "2" : profile.type === "fx" ? "3" : profile.type === "commodity" ? "4" : profile.type === "crypto" ? "5" : "6"}</code> ({ASSET_CLASS_LABELS[assetType]})에서 정의되었습니다.
+          이 페이지의 지표 선택은 <code className="text-gray-600">skills/data-analysis.md 3.{profile.type === "equity_etf" ? "1" : profile.type === "bond" ? "2" : profile.type === "fx" ? "3" : profile.type === "commodity" ? "4" : profile.type === "crypto" ? "5" : "6"}절</code> ({ASSET_CLASS_LABELS[assetType]})에서 정의되었습니다.
           분석 모드: <code className="text-gray-600">{profile.valueMode}</code>.
         </p>
       </section>

@@ -109,16 +109,39 @@ export default function MultiCompareClient({ assets }: Props) {
 
   const minLen = sliced.length > 0 ? Math.min(...sliced.map((s) => s.sliced.length)) : 0;
 
+  // 멀티 비교 전용 distinct 팔레트 — 같은 자산 클래스 내 티커 구분 위해
+  // 다른 클래스 간엔 색상 차이가 더 크게, 같은 클래스 내엔 베이스 색에서 명도/색상 분기
+  const DISTINCT_PALETTE = [
+    "#3B82F6", // 파랑
+    "#F59E0B", // 호박
+    "#10B981", // 에메랄드
+    "#EF4444", // 빨강
+    "#8B5CF6", // 보라
+    "#EC4899", // 핑크
+    "#06B6D4", // 시안
+    "#F97316", // 주황
+  ];
+
   const chartData = useMemo(() => {
     if (sliced.length === 0 || minLen === 0) return { dates: [], series: [] };
     const dates = sliced[0].sliced.slice(-minLen).map((d) => d.date);
-    const series = sliced.map((a) => {
+
+    // 자산 클래스별 카운트 — 같은 클래스에 2개 이상이면 distinct 팔레트 사용
+    const classCount: Partial<Record<AssetType, number>> = {};
+    for (const a of sliced) classCount[a.assetType] = (classCount[a.assetType] ?? 0) + 1;
+    const hasOverlap = Object.values(classCount).some((c) => (c ?? 0) > 1);
+
+    const series = sliced.map((a, idx) => {
       const data = a.sliced.slice(-minLen);
       const base = data[0]?.close ?? 1;
+      // 자산 클래스 중복 시 distinct 팔레트, 아니면 클래스 색상 사용
+      const color = hasOverlap
+        ? DISTINCT_PALETTE[idx % DISTINCT_PALETTE.length]
+        : ASSET_CLASS_COLORS[a.assetType];
       return {
         ticker: a.ticker,
         sector: ASSET_CLASS_LABELS[a.assetType],
-        color: ASSET_CLASS_COLORS[a.assetType],
+        color,
         cumulativeReturns: data.map((d) => d.close / base - 1),
       };
     });

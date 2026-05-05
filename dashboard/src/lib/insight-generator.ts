@@ -1,6 +1,6 @@
 // 인사이트 자동 생성 — skills/insight-generation.md 규칙 구현
 
-import type { AssetMetrics, Insight, InsightLevel } from "@/types";
+import type { AssetMetrics, AssetType, Insight, InsightLevel } from "@/types";
 
 // §2 개별 ETF 인사이트
 export function generateETFInsights(metrics: AssetMetrics): Insight[] {
@@ -154,7 +154,7 @@ export function generateCompareInsights(
   return insights;
 }
 
-// §6 크로스 에셋 인사이트 — skills/insight-generation.md §6 구현
+// 6절 크로스 에셋 인사이트 — skills/insight-generation.md 6절 구현
 export function generateCrossAssetInsights(params: {
   classMeans: { type: string; label: string; mean: number }[];
   stockBondCorr?: number;
@@ -173,24 +173,26 @@ export function generateCrossAssetInsights(params: {
     insights.push({
       level: "success",
       message: `최근 1년간 ${best.label} 자산이 ${(best.mean * 100).toFixed(1)}% 수익률로 가장 우수한 성과를 보였습니다.`,
+      relatedAssetType: best.type as AssetType,
     });
     const spread = (sorted[0].mean - sorted[sorted.length - 1].mean) * 100;
     if (spread > 30) {
       insights.push({
         level: "info",
         message: `자산 클래스 간 성과 격차가 ${spread.toFixed(0)}%p로 큽니다. 분산 투자 시 클래스별 비중 조절을 검토하세요.`,
+        // 다중 자산 비교 메시지 — 특정 클래스 한정 X (필터 무시 표시)
       });
     }
   }
 
-  // 리스크 온/오프 레짐
+  // 리스크 온/오프 레짐 — 여러 자산 클래스 동시 포함 (필터 무관)
   if (equityUp3m === true && goldDown3m === true && rateUp3m === true) {
     insights.push({ level: "info", message: "리스크 온 환경 — 위험 자산 선호 신호" });
   } else if (equityUp3m === false && goldDown3m === false && rateUp3m === false) {
     insights.push({ level: "warning", message: "리스크 오프 환경 — 안전 자산 수요 증가, 방어 전략 검토" });
   }
 
-  // 상관관계 변화
+  // 상관관계 변화 — 두 클래스 모두 관련
   if (stockBondCorr != null && stockBondCorr > 0.5) {
     insights.push({
       level: "warning",

@@ -128,25 +128,25 @@ const FEATURES = [
 // Skills.md → 코드 1:1 매핑 (바이브코딩 활용 증거)
 const SKILLS_CODE_MAP = [
   {
-    skill: "visualization.md §1.2",
+    skill: "visualization.md 1.2절",
     rule: "시계열 + 단일 종목 → LineChart\n시계열 + 다중 종목 → MultiLineChart\nN×N 행렬 → Heatmap\n구성 비율 → DonutChart",
     code: "lib/chart-selector.ts\nselectChart(desc: DataDescriptor): ChartType",
     comment: "DataDescriptor의 특성 플래그에 따라 13가지 중 자동 선택",
   },
   {
-    skill: "insight-generation.md §2",
+    skill: "insight-generation.md 2절",
     rule: "1M 수익률 > 10% → success\n변동성 > 30% → warning\nMDD > 20% → danger\nSharpe < 0 → danger",
     code: "lib/insight-generator.ts\ngenerateETFInsights(metrics)",
     comment: "조건 → 등급 → 메시지 템플릿 그대로 TypeScript if문으로 변환",
   },
   {
-    skill: "insight-generation.md §6",
+    skill: "insight-generation.md 6절",
     rule: "주식↑ + 금↓ + 금리↑ → 리스크 온\n주식-채권 상관 > 0.5 → 분산 약화 경고\nBTC-주식 상관 > 0.7 → 분산 제한",
     code: "lib/insight-generator.ts\ngenerateCrossAssetInsights(params)",
     comment: "크로스 에셋 레짐 판단 — page.tsx에서 호출",
   },
   {
-    skill: "data-analysis.md §2",
+    skill: "data-analysis.md 2절",
     rule: "변동성 = std(일간수익률) × √252\nSharpe = (연환산수익률 - 무위험수익률) / 변동성\nMDD = max peak-to-trough",
     code: "lib/analysis-engine.ts\nvolatility(), sharpeRatio(), maxDrawdown()",
     comment: "공식이 코드에 1:1 반영, 모든 자산 타입에 동일 로직 적용",
