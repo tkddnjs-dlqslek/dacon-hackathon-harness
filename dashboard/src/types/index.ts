@@ -123,14 +123,14 @@ export interface Insight {
   relatedAssetType?: AssetType;
 }
 
-// visualization.md §2.1
+// visualization.md §2.1 — Skills.md 색상 규칙: 자산 클래스별 구분색
 export const ASSET_CLASS_COLORS: Record<AssetType, string> = {
-  equity_etf: "#3B82F6",
-  bond: "#06B6D4",
-  fx: "#8B5CF6",
-  commodity: "#F59E0B",
-  crypto: "#F97316",
-  index: "#6B7280",
+  equity_etf: "#3B82F6",   // blue
+  bond:       "#10B981",   // emerald
+  fx:         "#F59E0B",   // amber
+  commodity:  "#F97316",   // orange
+  crypto:     "#8B5CF6",   // violet
+  index:      "#6B7280",   // gray
 };
 
 export const ASSET_CLASS_LABELS: Record<AssetType, string> = {
@@ -225,16 +225,16 @@ export const T = {
 } as const;
 
 export const SECTOR_COLORS: Record<string, string> = {
-  Technology: "#3B82F6",
-  Energy: "#F59E0B",
-  Healthcare: "#10B981",
-  Financials: "#8B5CF6",
-  "Consumer Disc.": "#EC4899",
-  Industrials: "#6B7280",
-  "Real Estate": "#F97316",
-  Utilities: "#06B6D4",
-  "Consumer Staples": "#84CC16",
-  Materials: "#A855F7",
-  Communication: "#F43F5E",
-  Benchmark: "#94A3B8",
+  Technology:         "#3B82F6",  // blue
+  Energy:             "#F97316",  // orange
+  Healthcare:         "#10B981",  // emerald
+  Financials:         "#6366F1",  // indigo
+  "Consumer Disc.":   "#EC4899",  // pink
+  Industrials:        "#F59E0B",  // amber
+  "Real Estate":      "#14B8A6",  // teal
+  Utilities:          "#84CC16",  // lime
+  "Consumer Staples": "#8B5CF6",  // violet
+  Materials:          "#06B6D4",  // cyan
+  Communication:      "#EF4444",  // red
+  Benchmark:          "#9CA3AF",  // gray
 };

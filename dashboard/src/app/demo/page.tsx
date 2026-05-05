@@ -1,4 +1,4 @@
-// 데모 가이드 페이지 — 심사자가 5분 만에 모든 기능을 둘러볼 수 있는 안내
+﻿// 데모 가이드 페이지 — 심사자가 5분 만에 모든 기능을 둘러볼 수 있는 안내
 
 import Link from "next/link";
 
@@ -125,6 +125,40 @@ const FEATURES = [
   },
 ];
 
+// Skills.md → 코드 1:1 매핑 (바이브코딩 활용 증거)
+const SKILLS_CODE_MAP = [
+  {
+    skill: "visualization.md §1.2",
+    rule: "시계열 + 단일 종목 → LineChart\n시계열 + 다중 종목 → MultiLineChart\nN×N 행렬 → Heatmap\n구성 비율 → DonutChart",
+    code: "lib/chart-selector.ts\nselectChart(desc: DataDescriptor): ChartType",
+    comment: "DataDescriptor의 특성 플래그에 따라 13가지 중 자동 선택",
+  },
+  {
+    skill: "insight-generation.md §2",
+    rule: "1M 수익률 > 10% → success\n변동성 > 30% → warning\nMDD > 20% → danger\nSharpe < 0 → danger",
+    code: "lib/insight-generator.ts\ngenerateETFInsights(metrics)",
+    comment: "조건 → 등급 → 메시지 템플릿 그대로 TypeScript if문으로 변환",
+  },
+  {
+    skill: "insight-generation.md §6",
+    rule: "주식↑ + 금↓ + 금리↑ → 리스크 온\n주식-채권 상관 > 0.5 → 분산 약화 경고\nBTC-주식 상관 > 0.7 → 분산 제한",
+    code: "lib/insight-generator.ts\ngenerateCrossAssetInsights(params)",
+    comment: "크로스 에셋 레짐 판단 — page.tsx에서 호출",
+  },
+  {
+    skill: "data-analysis.md §2",
+    rule: "변동성 = std(일간수익률) × √252\nSharpe = (연환산수익률 - 무위험수익률) / 변동성\nMDD = max peak-to-trough",
+    code: "lib/analysis-engine.ts\nvolatility(), sharpeRatio(), maxDrawdown()",
+    comment: "공식이 코드에 1:1 반영, 모든 자산 타입에 동일 로직 적용",
+  },
+  {
+    skill: "data-schema.md",
+    rule: "모든 자산 → { ticker, assetType, data: OHLCV[] }\n어댑터는 DataAdapter 인터페이스 구현\n새 소스 추가 = registerAdapter() 1줄",
+    code: "lib/adapters/types.ts\ninterface DataAdapter\nlib/adapters/yfinance.ts, csv.ts",
+    comment: "어댑터 패턴으로 데이터 소스 변경 시 코드 수정 불필요",
+  },
+];
+
 const ARCHITECTURE = [
   {
     title: "Skills.md 6개 파일",
@@ -162,27 +196,27 @@ export default function DemoPage() {
   return (
     <div className="space-y-8">
       {/* 헤더 */}
-      <header className="rounded-lg border border-blue-900/40 bg-gradient-to-br from-gray-900 to-blue-950 p-8">
+      <header className="rounded-lg border border-gray-200 bg-gray-50 p-8">
         <h1 className="text-3xl font-bold">5분 만에 둘러보기</h1>
-        <p className="mt-2 text-gray-300">
+        <p className="mt-2 text-gray-600">
           심사자를 위한 주요 기능 가이드 — 8개 페이지를 차례로 둘러볼 수 있습니다.
         </p>
         <div className="mt-4 grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
-          <div className="rounded bg-gray-900/50 p-3">
-            <p className="text-xs text-gray-400">자산 클래스</p>
+          <div className="rounded bg-gray-50/50 p-3">
+            <p className="text-xs text-gray-500">자산 클래스</p>
             <p className="font-mono text-lg">6개</p>
           </div>
-          <div className="rounded bg-gray-900/50 p-3">
-            <p className="text-xs text-gray-400">분석 대상 자산</p>
+          <div className="rounded bg-gray-50/50 p-3">
+            <p className="text-xs text-gray-500">분석 대상 자산</p>
             <p className="font-mono text-lg">~600개</p>
           </div>
-          <div className="rounded bg-gray-900/50 p-3">
-            <p className="text-xs text-gray-400">페이지</p>
+          <div className="rounded bg-gray-50/50 p-3">
+            <p className="text-xs text-gray-500">페이지</p>
             <p className="font-mono text-lg">11개</p>
           </div>
-          <div className="rounded bg-gray-900/50 p-3">
-            <p className="text-xs text-gray-400">외부 API 키</p>
-            <p className="font-mono text-lg text-green-400">0개</p>
+          <div className="rounded bg-gray-50/50 p-3">
+            <p className="text-xs text-gray-500">외부 API 키</p>
+            <p className="font-mono text-lg text-gray-900">0개</p>
           </div>
         </div>
       </header>
@@ -192,7 +226,7 @@ export default function DemoPage() {
         <h2 className="mb-4 text-xl font-bold">핵심 기능 둘러보기</h2>
         <div className="space-y-4">
           {FEATURES.map((f) => (
-            <div key={f.n} className="rounded-lg border border-gray-800 bg-gray-900 p-5 hover:border-blue-700 transition-colors">
+            <div key={f.n} className="rounded-lg border border-gray-200 bg-gray-50 p-5 hover:border-gray-500 transition-colors">
               <div className="flex items-start gap-4">
                 <div className="text-3xl">{f.icon}</div>
                 <div className="flex-1">
@@ -200,17 +234,45 @@ export default function DemoPage() {
                     <span className="text-xs text-gray-500">STEP {f.n}</span>
                     <h3 className="text-lg font-bold">{f.title}</h3>
                   </div>
-                  <p className="mt-1 text-sm text-gray-400">{f.summary}</p>
-                  <ul className="mt-3 list-disc list-inside space-y-1 text-xs text-gray-300">
+                  <p className="mt-1 text-sm text-gray-500">{f.summary}</p>
+                  <ul className="mt-3 list-disc list-inside space-y-1 text-xs text-gray-600">
                     {f.highlights.map((h, i) => <li key={i}>{h}</li>)}
                   </ul>
-                  <div className="mt-3 rounded border border-yellow-900/40 bg-yellow-950/30 p-2 text-xs text-yellow-300">
+                  <div className="mt-3 rounded border border-yellow-900/40 bg-gray-100/30 p-2 text-xs text-red-400">
                     <span className="font-bold">👉 해보세요:</span> {f.tryThis}
                   </div>
                 </div>
-                <Link href={f.href} className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-500">
+                <Link href={f.href} className="rounded bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-700 shrink-0">
                   열기 →
                 </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 바이브코딩 활용 — Skills.md → 코드 1:1 매핑 */}
+      <section>
+        <h2 className="mb-1 text-xl font-bold">바이브코딩 활용 — Skills.md → 코드 1:1 매핑</h2>
+        <p className="mb-4 text-sm text-gray-500">
+          이 대시보드는 Claude Code가 Skills.md를 읽고 TypeScript 코드를 생성하는 바이브코딩 방식으로 개발되었습니다.
+          각 Skills 규칙이 구현 파일의 함수로 1:1 변환됩니다.
+        </p>
+        <div className="space-y-3">
+          {SKILLS_CODE_MAP.map((m, i) => (
+            <div key={i} className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                <div>
+                  <p className="mb-1 text-xs font-bold text-gray-600">Skills.md 규칙</p>
+                  <p className="text-xs font-semibold text-gray-800">{m.skill}</p>
+                  <pre className="mt-1 whitespace-pre-wrap text-xs text-gray-500">{m.rule}</pre>
+                </div>
+                <div className="flex items-center justify-center text-gray-500 text-xl md:text-2xl">→</div>
+                <div>
+                  <p className="mb-1 text-xs font-bold text-green-400">구현 코드</p>
+                  <pre className="text-xs text-green-300">{m.code}</pre>
+                  <p className="mt-1 text-xs text-gray-500">{m.comment}</p>
+                </div>
               </div>
             </div>
           ))}
@@ -222,9 +284,9 @@ export default function DemoPage() {
         <h2 className="mb-4 text-xl font-bold">시스템 아키텍처</h2>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {ARCHITECTURE.map((a) => (
-            <div key={a.title} className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-              <h3 className="mb-2 font-semibold text-blue-400">{a.title}</h3>
-              <ul className="space-y-1 text-xs text-gray-300">
+            <div key={a.title} className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <h3 className="mb-2 font-semibold text-gray-600">{a.title}</h3>
+              <ul className="space-y-1 text-xs text-gray-600">
                 {a.items.map((item, i) => <li key={i}>• {item}</li>)}
               </ul>
             </div>
@@ -233,7 +295,7 @@ export default function DemoPage() {
       </section>
 
       {/* 차별화 포인트 */}
-      <section className="rounded-lg border border-purple-900/40 bg-gradient-to-br from-gray-900 to-purple-950 p-6">
+      <section className="rounded-lg border border-gray-200 bg-gray-50 p-6">
         <h2 className="mb-4 text-xl font-bold">차별화 포인트</h2>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {[
@@ -246,15 +308,15 @@ export default function DemoPage() {
             { t: "포트폴리오 URL 공유", d: "비중을 URL로 인코딩, 카톡 링크로 공유" },
             { t: "효율적 프론티어", d: "1000개 몬테카를로 시뮬레이션 + 최적 포트폴리오 자동 추출" },
           ].map((x, i) => (
-            <div key={i} className="rounded bg-gray-900/50 p-3">
-              <p className="font-bold text-purple-300">{x.t}</p>
-              <p className="text-xs text-gray-400">{x.d}</p>
+            <div key={i} className="rounded bg-gray-50/50 p-3">
+              <p className="font-bold text-gray-900">{x.t}</p>
+              <p className="text-xs text-gray-500">{x.d}</p>
             </div>
           ))}
         </div>
       </section>
 
-      <footer className="rounded-lg border border-gray-800 bg-gray-950 p-4 text-center text-xs text-gray-500">
+      <footer className="rounded-lg border border-gray-200 bg-white p-4 text-center text-xs text-gray-500">
         모든 기능은 yfinance 단일 무료 데이터 소스로 동작합니다 · 외부 API 키 불필요
       </footer>
     </div>

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useMemo } from "react";
 import { CumulativeReturnChart } from "@/components/charts";
@@ -6,6 +6,7 @@ import type { Asset, OHLCV, AssetType, Insight, UniverseAsset } from "@/types";
 import { ASSET_CLASS_COLORS, ASSET_CLASS_LABELS, T } from "@/types";
 import { useSort } from "@/lib/use-sort";
 import { SortIndicator } from "@/components/ui/SortIndicator";
+import { generateMarketSummary, type MarketSummary } from "@/lib/rule-summary";
 
 interface Props {
   assets: Asset[];
@@ -57,10 +58,10 @@ function corr(a: number[], b: number[]): number {
 }
 
 const insightColors: Record<string, string> = {
-  danger: "border-red-800 bg-red-950 text-red-300",
-  warning: "border-yellow-800 bg-yellow-950 text-yellow-300",
-  success: "border-green-800 bg-green-950 text-green-300",
-  info: "border-blue-800 bg-blue-950 text-blue-300",
+  danger: "border-red-200 bg-red-50 text-red-700",
+  warning: "border-yellow-200 bg-yellow-50 text-yellow-800",
+  success: "border-green-200 bg-green-50 text-green-700",
+  info: "border-gray-200 bg-gray-50 text-gray-600",
 };
 const insightLabels: Record<string, string> = {
   danger: T.alert,
@@ -91,18 +92,18 @@ function SortableAllAssetsTable({
   const sortHeader = (label: string, col: SortColumn, align: "left" | "right" = "left") => (
     <th
       onClick={() => handleSort(col)}
-      className={`pb-2 cursor-pointer hover:text-white ${align === "right" ? "text-right" : ""}`}
+      className={`pb-2 cursor-pointer hover:text-gray-900 ${align === "right" ? "text-right" : ""}`}
     >
       {label} <SortIndicator active={sort.column === col} direction={sort.direction} />
     </th>
   );
 
   return (
-    <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+    <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
       <h2 className="mb-3 font-semibold">{T.allAssets} ({rows.length}개) <span className="ml-2 text-xs text-gray-500">컬럼 클릭하여 정렬</span></h2>
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
-          <thead className="border-b border-gray-700 text-xs text-gray-400">
+          <thead className="border-b border-gray-200 text-xs text-gray-500">
             <tr>
               <th className="pb-2">{T.class}</th>
               {sortHeader(T.ticker, "ticker")}
@@ -114,17 +115,17 @@ function SortableAllAssetsTable({
           </thead>
           <tbody>
             {sortedData.map((a) => (
-              <tr key={a.ticker} className="border-b border-gray-800">
+              <tr key={a.ticker} className="border-b border-gray-200">
                 <td className="py-2">
                   <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: ASSET_CLASS_COLORS[a.assetType] }} />
                   {" "}<span className="text-xs text-gray-500">{ASSET_CLASS_LABELS[a.assetType]}</span>
                 </td>
                 <td className="py-2 font-mono font-bold">{a.ticker}</td>
-                <td className="py-2 text-gray-400">{a.name}</td>
+                <td className="py-2 text-gray-500">{a.name}</td>
                 <td className={`py-2 text-right font-mono ${a.ret >= 0 ? "text-green-400" : "text-red-400"}`}>
                   {(a.ret * 100).toFixed(1)}%
                 </td>
-                <td className="py-2 text-right font-mono text-gray-300">{(a.vol * 100).toFixed(1)}%</td>
+                <td className="py-2 text-right font-mono text-gray-600">{(a.vol * 100).toFixed(1)}%</td>
                 <td className="py-2 text-right font-mono text-red-400">{(a.mdd * 100).toFixed(1)}%</td>
               </tr>
             ))}
@@ -135,13 +136,40 @@ function SortableAllAssetsTable({
   );
 }
 
+const REGIME_STYLE: Record<string, string> = {
+  "리스크 온":  "bg-green-50 border-green-300 text-green-700",
+  "중립":       "bg-gray-50 border-gray-300 text-gray-600",
+  "리스크 오프": "bg-red-50 border-red-300 text-red-600",
+};
+
 export default function MultiAssetDashboard({ assets, universe, insights }: Props) {
   const [periodIdx, setPeriodIdx] = useState(3); // 1Y
   const [selectedTypes, setSelectedTypes] = useState<Set<AssetType>>(new Set(ASSET_TYPES));
   const [showUniverse, setShowUniverse] = useState(false);
   const [universeSearch, setUniverseSearch] = useState("");
+  const [aiSummary, setAiSummary] = useState<MarketSummary | null>(null);
 
   const period = PERIODS[periodIdx];
+
+  const runMarketSummary = () => {
+    const sorted = [...filtered].sort((a, b) => calcMetrics(b.sliced).ret - calcMetrics(a.sliced).ret);
+    const topGainers = sorted.slice(0, 3).map((a) => ({
+      ticker: a.ticker, ret: calcMetrics(a.sliced).ret, assetType: a.assetType,
+    }));
+    const topLosers = sorted.slice(-3).reverse().map((a) => ({
+      ticker: a.ticker, ret: calcMetrics(a.sliced).ret, assetType: a.assetType,
+    }));
+    const vixAsset = assets.find((a) => a.ticker === "^VIX");
+    const vix = vixAsset?.data?.at(-1)?.close;
+    const tnxAsset = assets.find((a) => a.ticker === "^TNX");
+    const irxAsset = assets.find((a) => a.ticker === "^IRX");
+    const yieldCurveSlope =
+      tnxAsset?.data?.at(-1)?.close != null && irxAsset?.data?.at(-1)?.close != null
+        ? (tnxAsset.data.at(-1)!.close - irxAsset.data.at(-1)!.close)
+        : undefined;
+
+    setAiSummary(generateMarketSummary({ topGainers, topLosers, vix, yieldCurveSlope, period: period.label }));
+  };
 
   const toggleType = (t: AssetType) => {
     const newSet = new Set(selectedTypes);
@@ -238,29 +266,48 @@ export default function MultiAssetDashboard({ assets, universe, insights }: Prop
           <p className="text-xs text-gray-500">
             상세 분석 자산 {assets.length}개 · S&P 500 + ETF 유니버스 {universe.length}개 · 총 {assets.length + universe.length}개
           </p>
+          <p className="mt-1 text-xs text-blue-600">
+            💡 자산 클래스 칩으로 필터링 · 기간 버튼으로 구간 조정 · 표 컬럼 클릭으로 정렬
+          </p>
         </div>
-        <div className="flex gap-1">
-          {PERIODS.map((p, i) => (
-            <button key={p.label} onClick={() => setPeriodIdx(i)}
-              className={`rounded px-3 py-1 text-sm ${i === periodIdx ? "bg-blue-600 text-white" : "text-gray-400 hover:bg-gray-800 hover:text-white"}`}>
-              {p.label}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1">
+            {PERIODS.map((p, i) => (
+              <button key={p.label} onClick={() => setPeriodIdx(i)}
+                className={`rounded px-3 py-1 text-sm ${i === periodIdx ? "bg-gray-900 text-white" : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"}`}>
+                {p.label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={runMarketSummary}
+            className="rounded border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 flex items-center gap-1.5"
+            title="룰 기반 시장 분석 (외부 API 키 불필요)"
+          >
+            <span>✦</span>
+            시장 분석
+          </button>
         </div>
       </div>
 
+      {/* 초보 투자자 진입 배너 */}
+      <a href="/demo" className="flex items-center justify-between rounded-lg border border-blue-100 bg-blue-50 px-4 py-2.5 text-sm hover:bg-blue-100 transition-colors">
+        <span className="text-blue-700">🚀 <strong>처음이신가요?</strong> 5분 안에 모든 기능을 둘러볼 수 있습니다.</span>
+        <span className="text-blue-500 text-xs font-medium">둘러보기 →</span>
+      </a>
+
       {/* 자산 클래스 필터 */}
-      <section className="rounded-lg border border-gray-800 bg-gray-900 p-3">
+      <section className="rounded-lg border border-gray-200 bg-gray-50 p-3">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-gray-400">{T.assetClasses}:</span>
+          <span className="text-xs text-gray-500">{T.assetClasses}:</span>
           {ASSET_TYPES.map((t) => {
             const isOn = selectedTypes.has(t);
             return (
               <button key={t} onClick={() => toggleType(t)}
                 className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition-colors ${
                   isOn
-                    ? "border-transparent text-white"
-                    : "border-gray-700 text-gray-500 hover:text-gray-300"
+                    ? "border-transparent text-gray-900"
+                    : "border-gray-200 text-gray-500 hover:text-gray-600"
                 }`}
                 style={isOn ? { backgroundColor: ASSET_CLASS_COLORS[t] } : undefined}>
                 <span className="h-2 w-2 rounded-full" style={{ backgroundColor: ASSET_CLASS_COLORS[t] }} />
@@ -270,6 +317,33 @@ export default function MultiAssetDashboard({ assets, universe, insights }: Prop
           })}
         </div>
       </section>
+
+      {/* 시장 분석 카드 (룰 기반) */}
+      {aiSummary && (
+        <section className={`rounded-lg border p-4 ${REGIME_STYLE[aiSummary.regime] ?? REGIME_STYLE["중립"]}`}>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold uppercase tracking-wider opacity-60">✦ 시장 분석 (룰 기반)</span>
+            <span className="text-xs font-semibold border rounded px-2 py-0.5 border-current">
+              {aiSummary.regime}
+            </span>
+          </div>
+          <p className="text-sm mb-3">{aiSummary.summary}</p>
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <p className="font-semibold mb-1 opacity-70">주목 자산</p>
+              <ul className="space-y-0.5">
+                {aiSummary.watchlist.map((w, i) => <li key={i}>· {w}</li>)}
+              </ul>
+            </div>
+            <div>
+              <p className="font-semibold mb-1 opacity-70">경고 신호</p>
+              <ul className="space-y-0.5">
+                {aiSummary.risks.map((r, i) => <li key={i}>· {r}</li>)}
+              </ul>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* 인사이트 배너 */}
       <section className="flex gap-3 overflow-x-auto pb-2">
@@ -283,36 +357,36 @@ export default function MultiAssetDashboard({ assets, universe, insights }: Prop
 
       {/* 요약 KPI */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <div className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-          <p className="text-xs text-gray-400">{T.trackedAssets}</p>
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <p className="text-xs text-gray-500">{T.trackedAssets}</p>
           <p className="mt-1 text-2xl font-bold">{totalAssets}</p>
         </div>
-        <div className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-          <p className="text-xs text-gray-400">{T.assetClasses}</p>
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <p className="text-xs text-gray-500">{T.assetClasses}</p>
           <p className="mt-1 text-2xl font-bold">{selectedTypes.size}</p>
         </div>
-        <div className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-          <p className="text-xs text-gray-400">{T.positiveAssets} ({period.label})</p>
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <p className="text-xs text-gray-500">{T.positiveAssets} ({period.label})</p>
           <p className="mt-1 text-2xl font-bold text-green-400">{positiveCount}</p>
         </div>
-        <div className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-          <p className="text-xs text-gray-400">{T.negativeAssets} ({period.label})</p>
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <p className="text-xs text-gray-500">{T.negativeAssets} ({period.label})</p>
           <p className="mt-1 text-2xl font-bold text-red-400">{totalAssets - positiveCount}</p>
         </div>
       </div>
 
       {/* 자산 클래스별 평균 수익률 */}
-      <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+      <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
         <h2 className="mb-3 font-semibold">{T.classPerformance} ({period.label})</h2>
         <div className="space-y-2">
           {classReturns.sort((a, b) => b.ret - a.ret).map((c) => (
             <div key={c.type} className="flex items-center gap-3">
               <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: ASSET_CLASS_COLORS[c.type] }} />
-              <span className="w-32 text-sm text-gray-300">{c.label}</span>
+              <span className="w-32 text-sm text-gray-600">{c.label}</span>
               <span className="w-12 text-xs text-gray-500">({c.count}개)</span>
               <div className="flex-1">
                 <div
-                  className={`h-5 rounded ${c.ret >= 0 ? "bg-green-600" : "bg-red-600"}`}
+                  className={`h-5 rounded ${c.ret >= 0 ? "bg-green-500" : "bg-red-500"}`}
                   style={{ width: `${Math.min(Math.abs(c.ret * 100) * 2, 100)}%` }}
                 />
               </div>
@@ -325,7 +399,7 @@ export default function MultiAssetDashboard({ assets, universe, insights }: Prop
       </section>
 
       {/* 대표 자산 누적 수익률 */}
-      <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+      <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
         <h2 className="mb-3 font-semibold">{T.crossAssetPerf} — {T.representativeTickers}</h2>
         {chartData.dates.length > 0 && (
           <CumulativeReturnChart dates={chartData.dates} series={chartData.series} />
@@ -333,7 +407,7 @@ export default function MultiAssetDashboard({ assets, universe, insights }: Prop
       </section>
 
       {/* 크로스 에셋 상관 매트릭스 */}
-      <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+      <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
         <h2 className="mb-3 font-semibold">{T.crossAssetCorr}</h2>
         <div className="overflow-x-auto">
           <table className="text-xs">
@@ -341,14 +415,14 @@ export default function MultiAssetDashboard({ assets, universe, insights }: Prop
               <tr>
                 <th />
                 {crossCorr.reps.map((r) => (
-                  <th key={r.ticker} className="px-2 py-1 text-center text-gray-400">{r.ticker}</th>
+                  <th key={r.ticker} className="px-2 py-1 text-center text-gray-500">{r.ticker}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {crossCorr.reps.map((r, i) => (
                 <tr key={r.ticker}>
-                  <td className="pr-2 text-right text-gray-400">
+                  <td className="pr-2 text-right text-gray-500">
                     <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: ASSET_CLASS_COLORS[r.type] }} />
                     {" "}{r.ticker}
                   </td>
@@ -377,7 +451,7 @@ export default function MultiAssetDashboard({ assets, universe, insights }: Prop
       <SortableAllAssetsTable filtered={filtered} periodLabel={period.label} />
 
       {/* S&P 500 유니버스 — 검색 가능한 대형 테이블 */}
-      <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+      <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-semibold">
             S&P 500 유니버스 ({universe.length}개)
@@ -389,11 +463,11 @@ export default function MultiAssetDashboard({ assets, universe, insights }: Prop
               value={universeSearch}
               onChange={(e) => setUniverseSearch(e.target.value)}
               placeholder="종목 검색 (예: AAPL)"
-              className="rounded bg-gray-800 px-3 py-1 text-sm text-white placeholder-gray-500"
+              className="rounded bg-gray-100 px-3 py-1 text-sm text-gray-900 placeholder-gray-500"
             />
             <button
               onClick={() => setShowUniverse(!showUniverse)}
-              className="rounded bg-gray-800 px-3 py-1 text-sm text-gray-300 hover:text-white"
+              className="rounded bg-gray-100 px-3 py-1 text-sm text-gray-600 hover:text-gray-900"
             >
               {showUniverse ? "접기" : "펼치기"}
             </button>
@@ -402,7 +476,7 @@ export default function MultiAssetDashboard({ assets, universe, insights }: Prop
         {showUniverse && (
           <div className="max-h-[500px] overflow-y-auto">
             <table className="w-full text-left text-sm">
-              <thead className="sticky top-0 bg-gray-900 border-b border-gray-700 text-xs text-gray-400">
+              <thead className="sticky top-0 bg-gray-50 border-b border-gray-200 text-xs text-gray-500">
                 <tr>
                   <th className="pb-2">{T.ticker}</th>
                   <th className="pb-2 text-right">현재가</th>
@@ -414,14 +488,14 @@ export default function MultiAssetDashboard({ assets, universe, insights }: Prop
               </thead>
               <tbody>
                 {universeFiltered.slice(0, 200).map((u) => (
-                  <tr key={u.ticker} className="border-b border-gray-800">
+                  <tr key={u.ticker} className="border-b border-gray-200">
                     <td className="py-2 font-mono font-bold">{u.ticker}</td>
-                    <td className="py-2 text-right font-mono text-gray-300">${u.metrics.currentPrice.toFixed(2)}</td>
+                    <td className="py-2 text-right font-mono text-gray-600">${u.metrics.currentPrice.toFixed(2)}</td>
                     <td className={`py-2 text-right font-mono ${u.metrics.return1Y >= 0 ? "text-green-400" : "text-red-400"}`}>
                       {(u.metrics.return1Y * 100).toFixed(1)}%
                     </td>
-                    <td className="py-2 text-right font-mono text-gray-300">{(u.metrics.volatility * 100).toFixed(1)}%</td>
-                    <td className={`py-2 text-right font-mono ${u.metrics.sharpe > 1 ? "text-green-400" : u.metrics.sharpe < 0 ? "text-red-400" : "text-gray-300"}`}>
+                    <td className="py-2 text-right font-mono text-gray-600">{(u.metrics.volatility * 100).toFixed(1)}%</td>
+                    <td className={`py-2 text-right font-mono ${u.metrics.sharpe > 1 ? "text-green-400" : u.metrics.sharpe < 0 ? "text-red-400" : "text-gray-600"}`}>
                       {u.metrics.sharpe.toFixed(2)}
                     </td>
                     <td className="py-2 text-right font-mono text-red-400">{(u.metrics.mdd * 100).toFixed(1)}%</td>

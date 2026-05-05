@@ -4,7 +4,7 @@
 import { Suspense } from "react";
 import { loadETFPrices, loadRiskFreeRate } from "@/lib/load-server-data";
 import PortfolioBuilder from "@/components/portfolio/PortfolioBuilder";
-import EfficientFrontier from "@/components/portfolio/EfficientFrontier";
+import EfficientFrontierClient from "@/components/portfolio/EfficientFrontierClient";
 
 export default async function PortfolioPage() {
   const [etfPrices, riskFreeRate] = await Promise.all([
@@ -13,7 +13,8 @@ export default async function PortfolioPage() {
   ]);
 
   const spy = etfPrices.find((e) => e.ticker === "SPY");
-  const sectorETFs = etfPrices.filter((e) => e.ticker !== "SPY");
+  // .KS/.KQ 한국 종목 및 비표준 티커 제외 — 미국 ETF만 포트폴리오에 포함
+  const sectorETFs = etfPrices.filter((e) => e.ticker !== "SPY" && !e.ticker.includes("."));
 
   const etfInputs = sectorETFs.map((e) => ({
     ticker: e.ticker,
@@ -31,7 +32,7 @@ export default async function PortfolioPage() {
           riskFreeRate={riskFreeRate}
         />
       </Suspense>
-      <EfficientFrontier etfs={etfInputs} riskFreeRate={riskFreeRate} />
+      <EfficientFrontierClient etfs={etfInputs} riskFreeRate={riskFreeRate} />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 // 효율적 프론티어 — 몬테카를로 시뮬레이션
 // 1000개 랜덤 비중 포트폴리오 생성 → 산점도 (변동성 vs 수익률, 색=샤프)
@@ -34,11 +34,11 @@ function dailyReturns(data: OHLCV[]): number[] {
 }
 
 function sharpeColor(sharpe: number): string {
-  if (sharpe > 1.5) return "#10B981";
-  if (sharpe > 1.0) return "#3B82F6";
-  if (sharpe > 0.5) return "#8B5CF6";
-  if (sharpe > 0) return "#F59E0B";
-  return "#EF4444";
+  if (sharpe > 1.5) return "#16a34a";
+  if (sharpe > 1.0) return "#444444";
+  if (sharpe > 0.5) return "#888888";
+  if (sharpe > 0) return "#aaaaaa";
+  return "#dc2626";
 }
 
 export default function EfficientFrontier({ etfs, riskFreeRate }: Props) {
@@ -127,7 +127,7 @@ export default function EfficientFrontier({ etfs, riskFreeRate }: Props) {
   }));
 
   return (
-    <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+    <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="font-semibold">효율적 프론티어 ({N_SIMS}개 랜덤 포트폴리오)</h2>
         <div className="flex gap-1">
@@ -136,7 +136,7 @@ export default function EfficientFrontier({ etfs, riskFreeRate }: Props) {
             { label: "2년", days: 501 },
           ].map((p) => (
             <button key={p.label} onClick={() => setPeriod(p.days)}
-              className={`rounded px-2 py-1 text-xs ${period === p.days ? "bg-blue-600 text-white" : "text-gray-400 hover:bg-gray-800"}`}>
+              className={`rounded px-2 py-1 text-xs ${period === p.days ? "bg-gray-900 text-white" : "text-gray-500 hover:bg-gray-100"}`}>
               {p.label}
             </button>
           ))}
@@ -145,34 +145,34 @@ export default function EfficientFrontier({ etfs, riskFreeRate }: Props) {
 
       <ResponsiveContainer width="100%" height={350}>
         <ScatterChart margin={{ top: 10, right: 20, bottom: 30, left: 20 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
           <XAxis
             type="number"
             dataKey="vol"
             name="변동성"
-            tick={{ fontSize: 10, fill: "#6b7280" }}
+            tick={{ fontSize: 10, fill: "#374151" }}
             tickFormatter={(v) => `${v}%`}
-            label={{ value: "변동성 (%)", position: "insideBottom", offset: -10, fill: "#9ca3af", fontSize: 11 }}
+            label={{ value: "변동성 (%)", position: "insideBottom", offset: -10, fill: "#374151", fontSize: 11 }}
           />
           <YAxis
             type="number"
             dataKey="ret"
             name="수익률"
-            tick={{ fontSize: 10, fill: "#6b7280" }}
+            tick={{ fontSize: 10, fill: "#374151" }}
             tickFormatter={(v) => `${v}%`}
-            label={{ value: "수익률 (%)", angle: -90, position: "insideLeft", fill: "#9ca3af", fontSize: 11 }}
+            label={{ value: "수익률 (%)", angle: -90, position: "insideLeft", fill: "#374151", fontSize: 11 }}
           />
           <ZAxis range={[15, 15]} />
           <Tooltip
             cursor={{ strokeDasharray: "3 3" }}
-            contentStyle={{ backgroundColor: "#111827", border: "1px solid #374151", borderRadius: 8 }}
+            contentStyle={{ backgroundColor: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 8 }}
             formatter={(value, name) => {
               const v = Number(value);
               if (name === "샤프") return [v.toFixed(2), name];
               return [`${v.toFixed(2)}%`, name];
             }}
           />
-          <Scatter data={scatterData} fill="#3B82F6">
+          <Scatter data={scatterData} fill="#111111">
             {scatterData.map((entry, i) => (
               <Cell key={i} fill={sharpeColor(entry.sharpe)} fillOpacity={0.5} />
             ))}
@@ -182,22 +182,22 @@ export default function EfficientFrontier({ etfs, riskFreeRate }: Props) {
 
       {/* 최적 포트폴리오 비교 */}
       <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
-        <div className="rounded-lg border border-green-800/50 bg-gray-950 p-3">
+        <div className="rounded-lg border border-green-800/50 bg-white p-3">
           <p className="text-xs text-green-400">🏆 최대 샤프 비율</p>
           <p className="mt-1 font-mono text-lg">{simulation.maxSharpe.sharpe.toFixed(2)}</p>
           <p className="text-xs text-gray-500">
             수익률 {(simulation.maxSharpe.ret * 100).toFixed(1)}% / 변동성 {(simulation.maxSharpe.vol * 100).toFixed(1)}%
           </p>
         </div>
-        <div className="rounded-lg border border-cyan-800/50 bg-gray-950 p-3">
-          <p className="text-xs text-cyan-400">🛡 최소 변동성</p>
+        <div className="rounded-lg border border-cyan-800/50 bg-white p-3">
+          <p className="text-xs text-gray-900">🛡 최소 변동성</p>
           <p className="mt-1 font-mono text-lg">{(simulation.minVol.vol * 100).toFixed(1)}%</p>
           <p className="text-xs text-gray-500">
             수익률 {(simulation.minVol.ret * 100).toFixed(1)}% / 샤프 {simulation.minVol.sharpe.toFixed(2)}
           </p>
         </div>
-        <div className="rounded-lg border border-orange-800/50 bg-gray-950 p-3">
-          <p className="text-xs text-orange-400">📈 최대 수익률</p>
+        <div className="rounded-lg border border-orange-800/50 bg-white p-3">
+          <p className="text-xs text-gray-900">📈 최대 수익률</p>
           <p className="mt-1 font-mono text-lg">{(simulation.maxRet.ret * 100).toFixed(1)}%</p>
           <p className="text-xs text-gray-500">
             변동성 {(simulation.maxRet.vol * 100).toFixed(1)}% / 샤프 {simulation.maxRet.sharpe.toFixed(2)}
@@ -206,16 +206,16 @@ export default function EfficientFrontier({ etfs, riskFreeRate }: Props) {
       </div>
 
       {/* 최대 샤프 포트폴리오 비중 */}
-      <div className="mt-4 rounded-lg border border-gray-800 bg-gray-950 p-3">
-        <p className="mb-2 text-xs text-gray-400">최대 샤프 포트폴리오 비중</p>
+      <div className="mt-4 rounded-lg border border-gray-200 bg-white p-3">
+        <p className="mb-2 text-xs text-gray-500">최대 샤프 포트폴리오 비중</p>
         <div className="flex flex-wrap gap-2">
           {etfs.map((etf, i) => {
             const w = simulation.maxSharpe.weights[i];
             if (w < 0.01) return null;
             return (
-              <span key={etf.ticker} className="rounded-full bg-gray-800 px-3 py-1 text-xs">
+              <span key={etf.ticker} className="rounded-full bg-gray-100 px-3 py-1 text-xs">
                 <span className="font-mono font-bold">{etf.ticker}</span>
-                <span className="ml-1 text-gray-400">{(w * 100).toFixed(0)}%</span>
+                <span className="ml-1 text-gray-500">{(w * 100).toFixed(0)}%</span>
               </span>
             );
           })}

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 // visualization.md §1.1: A vs B 시계열 → Dual Line Chart, 영역 차이 음영
 
@@ -30,21 +30,21 @@ export default function DualLineChart({
   return (
     <ResponsiveContainer width="100%" height={300}>
       <LineChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
         <XAxis
           dataKey="date"
-          tick={{ fontSize: 10, fill: "#6b7280" }}
+          tick={{ fontSize: 10, fill: "#374151" }}
           interval={tickInterval}
           tickFormatter={(d: string) => d.slice(5)}
         />
         <YAxis
-          tick={{ fontSize: 10, fill: "#6b7280" }}
+          tick={{ fontSize: 10, fill: "#374151" }}
           tickFormatter={(v: number) => `$${(v / 1000).toFixed(1)}k`}
           width={55}
         />
         <Tooltip
-          contentStyle={{ backgroundColor: "#111827", border: "1px solid #374151", borderRadius: 8 }}
-          labelStyle={{ color: "#9ca3af" }}
+          contentStyle={{ backgroundColor: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 8 }}
+          labelStyle={{ color: "#374151" }}
           formatter={(value, name) => [`$${Number(value).toLocaleString()}`, name]}
         />
         <Legend wrapperStyle={{ fontSize: 11 }} />
@@ -58,7 +58,7 @@ export default function DualLineChart({
         <Line
           type="monotone"
           dataKey={labelB}
-          stroke="#F59E0B"
+          stroke="#F97316"
           dot={false}
           strokeWidth={2}
           strokeDasharray="5 5"

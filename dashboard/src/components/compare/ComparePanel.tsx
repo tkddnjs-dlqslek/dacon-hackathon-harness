@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 // ETF vs 직접투자 비교 — 인터랙티브 클라이언트 컴포넌트
 
@@ -20,8 +20,8 @@ const RB_OPTIONS = [
   { label: "분기", value: "quarterly" as const },
 ];
 const PERIOD_OPTIONS = [
-  { label: "1Y", days: 252 },
-  { label: "2Y", days: 501 },
+  { label: "1년", days: 252 },
+  { label: "2년", days: 501 },
 ];
 
 export default function ComparePanel({ sectors, metadata, riskFreeRate }: Props) {
@@ -120,48 +120,48 @@ export default function ComparePanel({ sectors, metadata, riskFreeRate }: Props)
   return (
     <div className="space-y-6">
       {/* A. 설정 패널 */}
-      <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+      <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <div>
-            <label className="text-xs text-gray-400">섹터</label>
+            <label className="text-xs text-gray-500">섹터</label>
             <select
               value={sectorIdx}
               onChange={(e) => setSectorIdx(Number(e.target.value))}
-              className="mt-1 w-full rounded bg-gray-800 px-2 py-1 text-sm text-white"
+              className="mt-1 w-full rounded bg-gray-100 px-2 py-1 text-sm text-gray-900"
             >
               {sectors.map((s, i) => (
-                <option key={s.sector} value={i}>{s.sector} ({s.etfTicker})</option>
+                <option key={s.etfTicker} value={i}>{s.sector} ({s.etfTicker})</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="text-xs text-gray-400">상위 N개 종목</label>
+            <label className="text-xs text-gray-500">상위 N개 종목</label>
             <div className="mt-1 flex gap-1">
               {STOCK_COUNTS.map((n) => (
                 <button key={n} onClick={() => setStockCount(n)}
-                  className={`rounded px-2 py-1 text-xs ${stockCount === n ? "bg-blue-600 text-white" : "text-gray-400 hover:bg-gray-800"}`}>
+                  className={`rounded px-2 py-1 text-xs ${stockCount === n ? "bg-gray-900 text-white" : "text-gray-500 hover:bg-gray-100"}`}>
                   {n}
                 </button>
               ))}
             </div>
           </div>
           <div>
-            <label className="text-xs text-gray-400">리밸런싱</label>
+            <label className="text-xs text-gray-500">리밸런싱</label>
             <div className="mt-1 flex gap-1">
               {RB_OPTIONS.map((o, i) => (
                 <button key={o.label} onClick={() => setRbIdx(i)}
-                  className={`rounded px-2 py-1 text-xs ${rbIdx === i ? "bg-blue-600 text-white" : "text-gray-400 hover:bg-gray-800"}`}>
+                  className={`rounded px-2 py-1 text-xs ${rbIdx === i ? "bg-gray-900 text-white" : "text-gray-500 hover:bg-gray-100"}`}>
                   {o.label}
                 </button>
               ))}
             </div>
           </div>
           <div>
-            <label className="text-xs text-gray-400">기간</label>
+            <label className="text-xs text-gray-500">기간</label>
             <div className="mt-1 flex gap-1">
               {PERIOD_OPTIONS.map((o, i) => (
                 <button key={o.label} onClick={() => setPeriodIdx(i)}
-                  className={`rounded px-2 py-1 text-xs ${periodIdx === i ? "bg-blue-600 text-white" : "text-gray-400 hover:bg-gray-800"}`}>
+                  className={`rounded px-2 py-1 text-xs ${periodIdx === i ? "bg-gray-900 text-white" : "text-gray-500 hover:bg-gray-100"}`}>
                   {o.label}
                 </button>
               ))}
@@ -174,8 +174,8 @@ export default function ComparePanel({ sectors, metadata, riskFreeRate }: Props)
         <>
           {/* B. KPI 비교 */}
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <section className="rounded-lg border border-blue-900/50 bg-gray-900 p-4">
-              <h2 className="mb-3 text-sm font-semibold text-blue-400">ETF ({sector.etfTicker})</h2>
+            <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <h2 className="mb-3 text-sm font-semibold text-gray-600">ETF ({sector.etfTicker})</h2>
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { label: "수익률", value: `${(sim.etfMetrics.ret * 100).toFixed(1)}%` },
@@ -183,13 +183,13 @@ export default function ComparePanel({ sectors, metadata, riskFreeRate }: Props)
                   { label: "샤프", value: sim.etfMetrics.sharpe.toFixed(2) },
                   { label: "최대 낙폭", value: `${(sim.etfMetrics.mdd * 100).toFixed(1)}%` },
                 ].map((k) => (
-                  <div key={k.label}><p className="text-xs text-gray-400">{k.label}</p><p className="text-lg font-bold">{k.value}</p></div>
+                  <div key={k.label}><p className="text-xs text-gray-500">{k.label}</p><p className="text-lg font-bold">{k.value}</p></div>
                 ))}
               </div>
               <p className="mt-2 text-xs text-gray-500">총 비용: ${sim.etfTotalCost.toFixed(0)}</p>
             </section>
-            <section className="rounded-lg border border-orange-900/50 bg-gray-900 p-4">
-              <h2 className="mb-3 text-sm font-semibold text-orange-400">직접 투자 (상위 {stockCount}개)</h2>
+            <section className="rounded-lg border border-orange-900/50 bg-gray-50 p-4">
+              <h2 className="mb-3 text-sm font-semibold text-gray-900">직접 투자 (상위 {stockCount}개)</h2>
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { label: "수익률", value: `${(sim.directMetrics.ret * 100).toFixed(1)}%` },
@@ -197,7 +197,7 @@ export default function ComparePanel({ sectors, metadata, riskFreeRate }: Props)
                   { label: "샤프", value: sim.directMetrics.sharpe.toFixed(2) },
                   { label: "최대 낙폭", value: `${(sim.directMetrics.mdd * 100).toFixed(1)}%` },
                 ].map((k) => (
-                  <div key={k.label}><p className="text-xs text-gray-400">{k.label}</p><p className="text-lg font-bold">{k.value}</p></div>
+                  <div key={k.label}><p className="text-xs text-gray-500">{k.label}</p><p className="text-lg font-bold">{k.value}</p></div>
                 ))}
               </div>
               <p className="mt-2 text-xs text-gray-500">총 비용: ${sim.directTotalCost.toFixed(0)}</p>
@@ -205,13 +205,13 @@ export default function ComparePanel({ sectors, metadata, riskFreeRate }: Props)
           </div>
 
           {/* C. 누적 수익률 비교 */}
-          <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+          <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
             <h2 className="mb-3 font-semibold">누적 가치 비교</h2>
             <DualLineChart dates={sim.dates} seriesA={sim.etfValues} seriesB={sim.directValues} labelA="ETF" labelB="직접 투자" />
           </section>
 
           {/* E. 지표별 비교 */}
-          <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+          <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
             <h2 className="mb-3 font-semibold">지표 비교</h2>
             <GroupedBarChart
               data={[
@@ -224,17 +224,17 @@ export default function ComparePanel({ sectors, metadata, riskFreeRate }: Props)
           </section>
 
           {/* F. 직접투자 포트폴리오 구성 */}
-          <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+          <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
             <h2 className="mb-3 font-semibold">직접 투자 포트폴리오 구성</h2>
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-gray-700 text-xs text-gray-400">
+              <thead className="border-b border-gray-200 text-xs text-gray-500">
                 <tr><th className="pb-2">종목</th><th className="pb-2 text-right">비중</th><th className="pb-2 text-right">수익률</th><th className="pb-2 text-right">기여도</th></tr>
               </thead>
               <tbody>
                 {sim.holdings.map((h) => (
-                  <tr key={h.ticker} className="border-b border-gray-800">
+                  <tr key={h.ticker} className="border-b border-gray-200">
                     <td className="py-2 font-mono font-bold">{h.ticker}</td>
-                    <td className="py-2 text-right font-mono text-gray-300">{(h.weight * 100).toFixed(1)}%</td>
+                    <td className="py-2 text-right font-mono text-gray-600">{(h.weight * 100).toFixed(1)}%</td>
                     <td className={`py-2 text-right font-mono ${h.returnPct >= 0 ? "text-green-400" : "text-red-400"}`}>{(h.returnPct * 100).toFixed(1)}%</td>
                     <td className={`py-2 text-right font-mono ${h.contribution >= 0 ? "text-green-400" : "text-red-400"}`}>{(h.contribution * 100).toFixed(1)}%</td>
                   </tr>

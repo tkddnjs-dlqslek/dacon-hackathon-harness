@@ -154,7 +154,161 @@ export function generateCompareInsights(
   return insights;
 }
 
-// §6 인사이트 정렬 (우선순위)
+// §6 크로스 에셋 인사이트 — skills/insight-generation.md §6 구현
+export function generateCrossAssetInsights(params: {
+  classMeans: { type: string; label: string; mean: number }[];
+  stockBondCorr?: number;
+  btcStockCorr?: number;
+  equityUp3m?: boolean;
+  goldDown3m?: boolean;
+  rateUp3m?: boolean;
+}): Insight[] {
+  const insights: Insight[] = [];
+  const { classMeans, stockBondCorr, btcStockCorr, equityUp3m, goldDown3m, rateUp3m } = params;
+
+  // 자산 클래스 성과 비교
+  if (classMeans.length > 0) {
+    const sorted = [...classMeans].sort((a, b) => b.mean - a.mean);
+    const best = sorted[0];
+    insights.push({
+      level: "success",
+      message: `최근 1년간 ${best.label} 자산이 ${(best.mean * 100).toFixed(1)}% 수익률로 가장 우수한 성과를 보였습니다.`,
+    });
+    const spread = (sorted[0].mean - sorted[sorted.length - 1].mean) * 100;
+    if (spread > 30) {
+      insights.push({
+        level: "info",
+        message: `자산 클래스 간 성과 격차가 ${spread.toFixed(0)}%p로 큽니다. 분산 투자 시 클래스별 비중 조절을 검토하세요.`,
+      });
+    }
+  }
+
+  // 리스크 온/오프 레짐
+  if (equityUp3m === true && goldDown3m === true && rateUp3m === true) {
+    insights.push({ level: "info", message: "리스크 온 환경 — 위험 자산 선호 신호" });
+  } else if (equityUp3m === false && goldDown3m === false && rateUp3m === false) {
+    insights.push({ level: "warning", message: "리스크 오프 환경 — 안전 자산 수요 증가, 방어 전략 검토" });
+  }
+
+  // 상관관계 변화
+  if (stockBondCorr != null && stockBondCorr > 0.5) {
+    insights.push({
+      level: "warning",
+      message: `주식-채권 상관이 ${stockBondCorr.toFixed(2)}로 상승. 전통적 분산 효과 약화`,
+    });
+  }
+  if (btcStockCorr != null && btcStockCorr > 0.7) {
+    insights.push({
+      level: "info",
+      message: `암호화폐-주식 상관이 매우 높음(${btcStockCorr.toFixed(2)}). 분산 효과 제한적`,
+    });
+  }
+
+  return insights;
+}
+
+// §3 리밸런싱 신호 — skills/insight-generation.md §3 구현
+export function generateRebalancingInsights(
+  currentWeights: Record<string, number>,
+  targetWeights: Record<string, number>
+): Insight[] {
+  const insights: Insight[] = [];
+  for (const [ticker, target] of Object.entries(targetWeights)) {
+    const current = currentWeights[ticker] ?? 0;
+    const drift = Math.abs(current - target) * 100;
+    if (drift > 5) {
+      insights.push({
+        level: "warning",
+        message: `${ticker}의 현재 비중(${(current * 100).toFixed(0)}%)이 목표(${(target * 100).toFixed(0)}%)에서 ${drift.toFixed(1)}%p 이탈했습니다. 리밸런싱을 고려하세요.`,
+        relatedTicker: ticker,
+      });
+    }
+  }
+  return insights;
+}
+
+// §7 국제 정세·환율 인사이트 — skills/insight-generation.md §7 구현
+export function generateMacroInsights(params: {
+  vix?: number;
+  yieldCurveSpread?: number; // 10Y - 3M (%)
+  usdKrwReturn3m?: number;  // USDKRW 3개월 수익률
+}): Insight[] {
+  const insights: Insight[] = [];
+  const { vix, yieldCurveSpread, usdKrwReturn3m } = params;
+
+  if (vix != null) {
+    if (vix > 35) insights.push({ level: "danger", message: `시장 공포지수(VIX)가 ${vix.toFixed(0)}로 급등했습니다. 변동성 장세 — 리스크 자산 비중 점검이 필요합니다.` });
+    else if (vix > 25) insights.push({ level: "warning", message: `VIX가 ${vix.toFixed(0)}로 상승했습니다. 시장 불안이 높아지고 있습니다.` });
+    else if (vix < 15) insights.push({ level: "info", message: `VIX가 ${vix.toFixed(0)}로 낮습니다. 탐욕 구간 — 과열 주의가 필요할 수 있습니다.` });
+  }
+
+  if (yieldCurveSpread != null) {
+    if (yieldCurveSpread < 0) insights.push({ level: "danger", message: `장단기 금리차가 역전(${yieldCurveSpread.toFixed(2)}%p)됐습니다. 역사적으로 침체 선행 신호입니다. 방어 자산 비중을 검토하세요.` });
+    else if (yieldCurveSpread < 0.5) insights.push({ level: "warning", message: `일드 커브가 플래트닝 중(${yieldCurveSpread.toFixed(2)}%p). 경기 둔화 가능성을 고려하세요.` });
+  }
+
+  if (usdKrwReturn3m != null) {
+    const pct = (usdKrwReturn3m * 100);
+    if (pct > 5) insights.push({ level: "success", message: `원달러 환율이 ${pct.toFixed(1)}% 상승했습니다. 해외 자산의 KRW 환산 수익률이 높아졌습니다.` });
+    else if (pct < -5) insights.push({ level: "warning", message: `원달러 환율이 ${Math.abs(pct).toFixed(1)}% 하락했습니다. 해외 자산의 KRW 실질 수익이 줄어들 수 있습니다.` });
+  }
+
+  return insights;
+}
+
+// §8 페르소나별 맞춤 인사이트 — skills/insight-generation.md §8 구현
+export type PersonaType = "global_investor" | "crypto_hybrid" | "defensive";
+
+export function generatePersonaInsights(
+  persona: PersonaType,
+  params: {
+    // global_investor
+    usdReturnPct?: number;
+    krwReturnPct?: number;
+    usdAssetRatioPct?: number;
+    // crypto_hybrid
+    btcReturn30d?: number;
+    btcReturn90d?: number;
+    cryptoRatioPct?: number;
+    cryptoVol?: number;
+    cryptoStockCorr?: number;
+    // defensive
+    portfolioMdd?: number;
+    bondRatioPct?: number;
+    goldStockCorr?: number;
+    portfolioSharpe?: number;
+  }
+): Insight[] {
+  const insights: Insight[] = [];
+
+  if (persona === "global_investor") {
+    const { usdReturnPct = 0, krwReturnPct = 0, usdAssetRatioPct = 0 } = params;
+    const diff = krwReturnPct - usdReturnPct;
+    if (diff > 3) insights.push({ level: "success", message: `환율 효과로 KRW 실질 수익(${krwReturnPct.toFixed(1)}%)이 달러 수익(${usdReturnPct.toFixed(1)}%)보다 ${diff.toFixed(1)}%p 높습니다.` });
+    else if (diff < -3) insights.push({ level: "warning", message: `달러 약세로 KRW 실질 수익(${krwReturnPct.toFixed(1)}%)이 달러 수익(${usdReturnPct.toFixed(1)}%)보다 ${Math.abs(diff).toFixed(1)}%p 낮습니다. 환율 리스크를 고려하세요.` });
+    if (usdAssetRatioPct > 80) insights.push({ level: "warning", message: `포트폴리오의 ${usdAssetRatioPct.toFixed(0)}%가 달러 자산입니다. 환율 변동에 과도하게 노출되어 있습니다.` });
+  }
+
+  if (persona === "crypto_hybrid") {
+    const { btcReturn30d = 0, btcReturn90d = 0, cryptoRatioPct = 0, cryptoVol = 0, cryptoStockCorr } = params;
+    if (btcReturn30d > 0.2 && btcReturn90d > 0.3) insights.push({ level: "success", message: "BTC 강세장 진입 신호. 크립토 자산 모멘텀이 강합니다." });
+    else if (btcReturn30d < -0.2 && btcReturn90d < -0.3) insights.push({ level: "danger", message: "BTC 약세장 신호. 크립토 비중 축소 및 리스크 관리를 검토하세요." });
+    if (cryptoRatioPct > 50) insights.push({ level: "danger", message: `크립토 비중이 ${cryptoRatioPct.toFixed(0)}%로 높습니다. 연환산 변동성이 ${(cryptoVol * 100).toFixed(0)}%에 달합니다.` });
+    if (cryptoStockCorr != null && cryptoStockCorr < 0.3) insights.push({ level: "success", message: `크립토-주식 상관이 낮아(${cryptoStockCorr.toFixed(2)}) 분산 효과가 유효합니다.` });
+  }
+
+  if (persona === "defensive") {
+    const { portfolioMdd = 0, bondRatioPct = 0, goldStockCorr, portfolioSharpe = 0 } = params;
+    if (Math.abs(portfolioMdd) > 0.15) insights.push({ level: "danger", message: `포트폴리오 최대 낙폭이 -${(Math.abs(portfolioMdd) * 100).toFixed(1)}%입니다. 방어형 투자자에게 권장 범위를 초과했습니다.` });
+    if (bondRatioPct < 20) insights.push({ level: "warning", message: `채권 비중이 ${bondRatioPct.toFixed(0)}%로 낮습니다. 방어 자산 확충을 검토하세요.` });
+    if (goldStockCorr != null && goldStockCorr < 0) insights.push({ level: "success", message: `금이 주식과 음의 상관(${goldStockCorr.toFixed(2)})을 유지 중입니다. 분산 효과가 작동하고 있습니다.` });
+    if (portfolioSharpe > 1.0) insights.push({ level: "success", message: `포트폴리오 샤프 비율이 ${portfolioSharpe.toFixed(2)}로 우수합니다. 리스크 대비 효율적인 포트폴리오입니다.` });
+  }
+
+  return insights;
+}
+
+// §10 인사이트 정렬 (우선순위)
 const LEVEL_PRIORITY: Record<InsightLevel, number> = {
   danger: 0,
   warning: 1,

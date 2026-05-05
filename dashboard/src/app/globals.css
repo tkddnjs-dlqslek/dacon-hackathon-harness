@@ -1,26 +1,139 @@
 @import "tailwindcss";
 
+/* ── 디자인 토큰 — 화이트 베이스, 강조 빨강/초록만 ── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* 배경 */
+  --bg-base:    #FFFFFF;
+  --bg-surface: #F7F7F7;
+  --bg-elevated:#EFEFEF;
+
+  /* 텍스트 */
+  --text-primary:   #0C0C0C;
+  --text-secondary: #444444;
+  --text-muted:     #888888;
+
+  /* 경계선 */
+  --border:        #E0E0E0;
+  --border-subtle: #F0F0F0;
+
+  /* 강조 — 수익/손실만 */
+  --positive: #16a34a;   /* green-600 */
+  --negative: #dc2626;   /* red-600 */
+
+  /* 타이포 */
+  --font-sans: var(--font-inter), var(--font-noto-sans-kr), sans-serif;
+  --font-mono: var(--font-ibm-plex-mono), monospace;
+  --font-size-base: 14px;
+
+  --radius-card: 4px;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--bg-base);
+  --color-foreground: var(--text-primary);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: var(--font-size-base); }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
+
+/* ── 숫자 고정폭 ── */
+.tabular-nums, [data-numeric], .metric-value, .price, .return-pct {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: 0.01em;
+}
+
+.text-positive { color: var(--positive); }
+.text-negative { color: var(--negative); }
+
+/* ── 카드 ── */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+}
+
+/* ── range input 트랙 색상 ── */
+input[type="range"] {
+  -webkit-appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: transparent;
+  outline: none;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  background: linear-gradient(
+    to right,
+    var(--slider-fill, #E5E7EB) 0%,
+    var(--slider-fill, #E5E7EB) var(--slider-pct, 0%),
+    #E5E7EB var(--slider-pct, 0%),
+    #E5E7EB 100%
+  );
+  height: 4px;
+  border-radius: 2px;
+}
+input[type="range"]::-moz-range-track {
+  background: #E5E7EB;
+  height: 4px;
+  border-radius: 2px;
+  border: none;
+}
+input[type="range"]::-moz-range-progress {
+  background: var(--slider-fill, #3B82F6);
+  height: 4px;
+  border-radius: 2px;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: currentColor;
+  cursor: pointer;
+  margin-top: -5px;
+}
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: currentColor;
+  cursor: pointer;
+  border: none;
+}
+
+/* ── 스크롤바 ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ── 테이블 ── */
+table { border-collapse: collapse; width: 100%; }
+th {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  padding: 5px 10px;
+  text-align: left;
+}
+td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 13px;
+}
+tr:hover td { background: var(--bg-surface); }

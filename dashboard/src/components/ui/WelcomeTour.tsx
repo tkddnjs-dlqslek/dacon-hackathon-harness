@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 // 첫 방문 가이드 투어 — localStorage로 1회만 표시
 
@@ -60,29 +60,29 @@ export default function WelcomeTour() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-md rounded-lg border border-gray-700 bg-gray-900 p-6 shadow-2xl">
+      <div className="w-full max-w-md rounded-lg border border-gray-200 bg-gray-50 p-6 shadow-2xl">
         <div className="mb-2 flex items-center justify-between">
           <span className="text-xs text-gray-500">{step + 1} / {STEPS.length}</span>
-          <button onClick={close} className="text-xs text-gray-500 hover:text-white">건너뛰기</button>
+          <button onClick={close} className="text-xs text-gray-500 hover:text-gray-900">건너뛰기</button>
         </div>
-        <h2 className="text-xl font-bold text-white">{current.title}</h2>
-        <p className="mt-3 text-sm text-gray-300 leading-relaxed">{current.content}</p>
+        <h2 className="text-xl font-bold text-gray-900">{current.title}</h2>
+        <p className="mt-3 text-sm text-gray-600 leading-relaxed">{current.content}</p>
         <div className="mt-6 flex items-center justify-between">
           <div className="flex gap-1">
             {STEPS.map((_, i) => (
               <div
                 key={i}
-                className={`h-1.5 w-1.5 rounded-full ${i === step ? "bg-blue-500 w-4" : "bg-gray-700"} transition-all`}
+                className={`h-1.5 w-1.5 rounded-full ${i === step ? "bg-white w-4" : "bg-gray-200"} transition-all`}
               />
             ))}
           </div>
           <div className="flex gap-2">
             {step > 0 && (
-              <button onClick={prev} className="rounded bg-gray-800 px-4 py-1.5 text-sm text-gray-300 hover:text-white">
+              <button onClick={prev} className="rounded bg-gray-100 px-4 py-1.5 text-sm text-gray-600 hover:text-gray-900">
                 이전
               </button>
             )}
-            <button onClick={next} className="rounded bg-blue-600 px-4 py-1.5 text-sm text-white hover:bg-blue-500">
+            <button onClick={next} className="rounded bg-gray-900 text-white px-4 py-1.5 text-sm text-gray-900 hover:bg-gray-100">
               {isLast ? "시작하기" : "다음"}
             </button>
           </div>

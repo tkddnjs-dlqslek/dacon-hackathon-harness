@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 // visualization.md §1.1: 시계열 + 다중 종목 → Multi-line Chart
 // 마우스 휠로 가로 확대/축소 + 색상 다중 fallback 매핑
@@ -24,7 +24,7 @@ interface Props {
 // 색상 결정: 명시 color → SECTOR_COLORS → 한국어 자산 클래스 라벨 매칭 → fallback 팔레트
 const FALLBACK_PALETTE = [
   "#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6",
-  "#EC4899", "#06B6D4", "#84CC16", "#F97316", "#A855F7",
+  "#EC4899", "#06B6D4", "#84CC16", "#F97316", "#6366F1",
 ];
 
 function resolveColor(s: Series, index: number): string {
@@ -134,12 +134,12 @@ export default function CumulativeReturnChart({ dates, series, height = 300 }: P
       <div className="absolute right-2 top-2 z-10 flex items-center gap-2">
         {isZoomed && (
           <>
-            <span className="rounded bg-gray-800/80 px-2 py-1 text-xs text-gray-300">
+            <span className="rounded bg-gray-100/80 px-2 py-1 text-xs text-gray-600">
               {zoomPercent}% · {slicedDates[0]} ~ {slicedDates[slicedDates.length - 1]}
             </span>
             <button
               onClick={() => setZoomRange(null)}
-              className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-300 hover:bg-gray-700 hover:text-white"
+              className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600 hover:bg-gray-100 hover:text-gray-900"
             >
               🔍 전체 보기
             </button>
@@ -149,21 +149,21 @@ export default function CumulativeReturnChart({ dates, series, height = 300 }: P
 
       <ResponsiveContainer width="100%" height={height}>
         <LineChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
           <XAxis
             dataKey="date"
-            tick={{ fontSize: 10, fill: "#6b7280" }}
+            tick={{ fontSize: 10, fill: "#374151" }}
             interval={tickInterval}
             tickFormatter={(d: string) => d.slice(5)}
           />
           <YAxis
-            tick={{ fontSize: 10, fill: "#6b7280" }}
+            tick={{ fontSize: 10, fill: "#374151" }}
             tickFormatter={(v: number) => `${v}%`}
             width={50}
           />
           <Tooltip
-            contentStyle={{ backgroundColor: "#111827", border: "1px solid #374151", borderRadius: 8 }}
-            labelStyle={{ color: "#9ca3af", fontSize: 12, marginBottom: 4 }}
+            contentStyle={{ backgroundColor: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 8 }}
+            labelStyle={{ color: "#374151", fontSize: 11, marginBottom: 4 }}
             itemStyle={{ fontSize: 11, padding: "2px 0" }}
             formatter={(value, name) => {
               const v = Number(value);

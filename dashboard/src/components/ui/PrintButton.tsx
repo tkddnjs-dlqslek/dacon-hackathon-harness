@@ -1,10 +1,10 @@
-"use client";
+﻿"use client";
 
 export default function PrintButton() {
   return (
     <button
       onClick={() => window.print()}
-      className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-500 print:hidden"
+      className="rounded bg-gray-900 text-white px-4 py-2 text-sm text-gray-900 hover:bg-gray-100 print:hidden"
     >
       🖨 인쇄
     </button>

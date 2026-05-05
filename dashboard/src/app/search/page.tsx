@@ -1,4 +1,4 @@
-// 종목 검색 + 관심종목 + 즉석 분석 페이지
+﻿// 종목 검색 + 관심종목 + 즉석 분석 페이지
 
 "use client";
 
@@ -143,14 +143,14 @@ export default function SearchPage() {
       </div>
 
       {/* 검색 */}
-      <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+      <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
         <h2 className="mb-3 font-semibold">종목 검색</h2>
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="예: AAPL, 삼성전자, BTC-USD, EURUSD=X"
-          className="w-full rounded bg-gray-800 px-4 py-2 text-white placeholder-gray-500"
+          className="w-full rounded bg-gray-100 px-4 py-2 text-gray-900 placeholder-gray-500"
           autoFocus
         />
         {searching && <p className="mt-2 text-xs text-gray-500">검색 중...</p>}
@@ -160,11 +160,11 @@ export default function SearchPage() {
               <button
                 key={r.symbol}
                 onClick={() => handleAdd(r)}
-                className="flex w-full items-center justify-between rounded p-2 text-left text-sm hover:bg-gray-800"
+                className="flex w-full items-center justify-between rounded p-2 text-left text-sm hover:bg-gray-100"
               >
                 <div className="flex items-center gap-3">
-                  <span className="font-mono font-bold text-blue-400">{r.symbol}</span>
-                  <span className="text-gray-300">{r.name}</span>
+                  <span className="font-mono font-bold text-gray-600">{r.symbol}</span>
+                  <span className="text-gray-600">{r.name}</span>
                   {r.exchange && <span className="text-xs text-gray-500">{r.exchange}</span>}
                 </div>
                 <span className="text-xs text-gray-500">+ 추가</span>
@@ -175,7 +175,7 @@ export default function SearchPage() {
       </section>
 
       {/* 관심종목 */}
-      <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+      <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="font-semibold">관심종목 ({watchlist.length}개)</h2>
           {loading && <span className="text-xs text-gray-500">데이터 불러오는 중...</span>}
@@ -187,7 +187,7 @@ export default function SearchPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-gray-700 text-xs text-gray-400">
+              <thead className="border-b border-gray-200 text-xs text-gray-500">
                 <tr>
                   <th className="pb-2">종목</th>
                   <th className="pb-2">이름</th>
@@ -201,9 +201,9 @@ export default function SearchPage() {
               </thead>
               <tbody>
                 {assets.map((a) => (
-                  <tr key={a.ticker} className="border-b border-gray-800">
+                  <tr key={a.ticker} className="border-b border-gray-200">
                     <td className="py-2 font-mono font-bold">{a.ticker}</td>
-                    <td className="py-2 text-gray-400">{a.name}</td>
+                    <td className="py-2 text-gray-500">{a.name}</td>
                     <td className="py-2">
                       <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: ASSET_CLASS_COLORS[a.assetType] }} />
                       {" "}<span className="text-xs text-gray-500">{ASSET_CLASS_LABELS[a.assetType]}</span>
@@ -211,8 +211,8 @@ export default function SearchPage() {
                     <td className={`py-2 text-right font-mono ${(a.metrics?.return ?? 0) >= 0 ? "text-green-400" : "text-red-400"}`}>
                       {((a.metrics?.return ?? 0) * 100).toFixed(1)}%
                     </td>
-                    <td className="py-2 text-right font-mono text-gray-300">{((a.metrics?.volatility ?? 0) * 100).toFixed(1)}%</td>
-                    <td className={`py-2 text-right font-mono ${(a.metrics?.sharpe ?? 0) > 1 ? "text-green-400" : "text-gray-300"}`}>
+                    <td className="py-2 text-right font-mono text-gray-600">{((a.metrics?.volatility ?? 0) * 100).toFixed(1)}%</td>
+                    <td className={`py-2 text-right font-mono ${(a.metrics?.sharpe ?? 0) > 1 ? "text-green-400" : "text-gray-600"}`}>
                       {(a.metrics?.sharpe ?? 0).toFixed(2)}
                     </td>
                     <td className="py-2 text-right font-mono text-red-400">{((a.metrics?.mdd ?? 0) * 100).toFixed(1)}%</td>
@@ -229,16 +229,16 @@ export default function SearchPage() {
 
       {/* 누적 수익률 차트 */}
       {assets.length > 0 && (
-        <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+        <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
           <h2 className="mb-3 font-semibold">관심종목 누적 수익률 비교</h2>
           <CumulativeReturnChart dates={chartData.dates} series={chartData.series} />
         </section>
       )}
 
       {/* 안내 */}
-      <section className="rounded-lg border border-gray-800 bg-gray-950 p-3 text-xs text-gray-500">
+      <section className="rounded-lg border border-gray-200 bg-white p-3 text-xs text-gray-500">
         <p>
-          <span className="text-gray-400">데이터 소스:</span> yahoo-finance2 (실시간) — 검색하는 모든 종목이 곧바로 통일 OHLCV 스키마로 변환되어 분석됩니다. 새 자산 추가 시 코드 수정이나 사전 수집 불필요.
+          <span className="text-gray-500">데이터 소스:</span> yahoo-finance2 (실시간) — 검색하는 모든 종목이 곧바로 통일 OHLCV 스키마로 변환되어 분석됩니다. 새 자산 추가 시 코드 수정이나 사전 수집 불필요.
         </p>
       </section>
     </div>

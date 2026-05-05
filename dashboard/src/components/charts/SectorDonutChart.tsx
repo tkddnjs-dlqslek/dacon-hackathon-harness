@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 // visualization.md §1.1: 구성 비율 → Donut Chart, 항목 ≤ 6개 초과 시 "기타" 묶음
 
@@ -32,7 +32,7 @@ export default function SectorDonutChart({ data }: Props) {
           paddingAngle={2}
           dataKey="value"
           label={({ name, value }) => `${value}%`}
-          labelLine={{ stroke: "#4b5563" }}
+          labelLine={{ stroke: "#d1d5db" }}
         >
           {chartData.map((entry) => (
             <Cell
@@ -42,12 +42,12 @@ export default function SectorDonutChart({ data }: Props) {
           ))}
         </Pie>
         <Tooltip
-          contentStyle={{ backgroundColor: "#111827", border: "1px solid #374151", borderRadius: 8 }}
+          contentStyle={{ backgroundColor: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 8 }}
           formatter={(value) => [`${Number(value).toFixed(1)}%`]}
         />
         <Legend
           wrapperStyle={{ fontSize: 11 }}
-          formatter={(value: string) => <span style={{ color: "#9ca3af" }}>{value}</span>}
+          formatter={(value: string) => <span style={{ color: "#374151" }}>{value}</span>}
         />
       </PieChart>
     </ResponsiveContainer>

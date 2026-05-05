@@ -25,7 +25,7 @@ export default async function ComparePage() {
       .filter(Boolean) as { ticker: string; data: typeof etf.data }[];
 
     return {
-      sector: etf.sector ?? "Unknown",
+      sector: etf.sector ?? meta?.sector ?? etf.name?.split(" ").slice(0, 2).join(" ") ?? etf.ticker,
       etfTicker: etf.ticker,
       etfData: etf.data,
       stocks,
@@ -34,7 +34,7 @@ export default async function ComparePage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">ETF vs Direct Investment</h1>
+      <h1 className="text-2xl font-bold">ETF vs 직접 투자</h1>
       <ComparePanel sectors={sectors} metadata={metadata} riskFreeRate={riskFreeRate} />
     </div>
   );

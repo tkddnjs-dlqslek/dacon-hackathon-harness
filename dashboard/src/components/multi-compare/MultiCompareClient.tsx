@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useMemo } from "react";
 import { CumulativeReturnChart } from "@/components/charts";
@@ -141,13 +141,13 @@ export default function MultiCompareClient({ assets }: Props) {
   return (
     <div className="space-y-6">
       {/* 프리셋 + 기간 */}
-      <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+      <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="font-semibold">프리셋 비교</h2>
           <div className="flex gap-1">
             {PERIODS.map((p, i) => (
               <button key={p.label} onClick={() => setPeriodIdx(i)}
-                className={`rounded px-3 py-1 text-sm ${i === periodIdx ? "bg-blue-600 text-white" : "text-gray-400 hover:bg-gray-800"}`}>
+                className={`rounded px-3 py-1 text-sm ${i === periodIdx ? "bg-gray-900 text-white" : "text-gray-500 hover:bg-gray-100"}`}>
                 {p.label}
               </button>
             ))}
@@ -156,7 +156,7 @@ export default function MultiCompareClient({ assets }: Props) {
         <div className="flex flex-wrap gap-2">
           {PRESETS.map((p) => (
             <button key={p.label} onClick={() => applyPreset(p.tickers)}
-              className="rounded-full border border-gray-700 px-3 py-1 text-xs text-gray-300 hover:border-blue-500 hover:text-white">
+              className="rounded-full border border-gray-200 px-3 py-1 text-xs text-gray-600 hover:border-white hover:text-gray-900">
               {p.label}
             </button>
           ))}
@@ -164,23 +164,23 @@ export default function MultiCompareClient({ assets }: Props) {
       </section>
 
       {/* 자산 추가 */}
-      <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+      <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
         <h2 className="mb-3 font-semibold">자산 추가 (최대 8개, 현재 {selected.length}개)</h2>
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="검색: 티커 또는 이름 (예: AAPL, 삼성, BTC)"
-          className="w-full rounded bg-gray-800 px-4 py-2 text-white placeholder-gray-500"
+          className="w-full rounded bg-gray-100 px-4 py-2 text-gray-900 placeholder-gray-500"
         />
         {searchResults.length > 0 && (
           <div className="mt-3 max-h-60 overflow-y-auto space-y-1">
             {searchResults.map((r) => (
               <button key={r.ticker} onClick={() => { toggle(r.ticker); setSearch(""); }}
-                className="flex w-full items-center gap-3 rounded p-2 text-left text-sm hover:bg-gray-800">
+                className="flex w-full items-center gap-3 rounded p-2 text-left text-sm hover:bg-gray-100">
                 <span className="h-2 w-2 rounded-full" style={{ backgroundColor: ASSET_CLASS_COLORS[r.assetType] }} />
-                <span className="font-mono font-bold text-blue-400">{r.ticker}</span>
-                <span className="text-gray-300">{r.name}</span>
+                <span className="font-mono font-bold text-gray-600">{r.ticker}</span>
+                <span className="text-gray-600">{r.name}</span>
                 <span className="ml-auto text-xs text-gray-500">{ASSET_CLASS_LABELS[r.assetType]}</span>
               </button>
             ))}
@@ -190,15 +190,15 @@ export default function MultiCompareClient({ assets }: Props) {
 
       {/* 선택 자산 칩 */}
       {selectedAssets.length > 0 && (
-        <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+        <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
           <h2 className="mb-3 font-semibold">선택한 자산</h2>
           <div className="flex flex-wrap gap-2">
             {selectedAssets.map((a) => (
               <button key={a.ticker} onClick={() => toggle(a.ticker)}
-                className="flex items-center gap-2 rounded-full border-2 px-3 py-1 text-xs text-white hover:opacity-80"
+                className="flex items-center gap-2 rounded-full border-2 px-3 py-1 text-xs text-gray-900 hover:opacity-80"
                 style={{ borderColor: ASSET_CLASS_COLORS[a.assetType], backgroundColor: `${ASSET_CLASS_COLORS[a.assetType]}30` }}>
                 <span className="font-mono font-bold">{a.ticker}</span>
-                <span className="text-gray-300">{a.name}</span>
+                <span className="text-gray-600">{a.name}</span>
                 <span className="text-gray-500">×</span>
               </button>
             ))}
@@ -208,7 +208,7 @@ export default function MultiCompareClient({ assets }: Props) {
 
       {/* 누적 수익률 차트 */}
       {chartData.dates.length > 0 && (
-        <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+        <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
           <h2 className="mb-3 font-semibold">누적 수익률 비교 ({period.label})</h2>
           <CumulativeReturnChart dates={chartData.dates} series={chartData.series} />
         </section>
@@ -216,11 +216,11 @@ export default function MultiCompareClient({ assets }: Props) {
 
       {/* 지표 비교 표 */}
       {metricsTable.length > 0 && (
-        <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+        <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
           <h2 className="mb-3 font-semibold">지표 비교 ({period.label})</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-gray-700 text-xs text-gray-400">
+              <thead className="border-b border-gray-200 text-xs text-gray-500">
                 <tr>
                   <th className="pb-2">분류</th>
                   <th className="pb-2">종목</th>
@@ -235,18 +235,18 @@ export default function MultiCompareClient({ assets }: Props) {
                 {metricsTable
                   .sort((a, b) => b.ret - a.ret)
                   .map((m) => (
-                    <tr key={m.ticker} className="border-b border-gray-800">
+                    <tr key={m.ticker} className="border-b border-gray-200">
                       <td className="py-2">
                         <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: ASSET_CLASS_COLORS[m.assetType] }} />
                         {" "}<span className="text-xs text-gray-500">{ASSET_CLASS_LABELS[m.assetType]}</span>
                       </td>
                       <td className="py-2 font-mono font-bold">{m.ticker}</td>
-                      <td className="py-2 text-gray-400">{m.name}</td>
+                      <td className="py-2 text-gray-500">{m.name}</td>
                       <td className={`py-2 text-right font-mono ${m.ret >= 0 ? "text-green-400" : "text-red-400"}`}>
                         {(m.ret * 100).toFixed(1)}%
                       </td>
-                      <td className="py-2 text-right font-mono text-gray-300">{(m.vol * 100).toFixed(1)}%</td>
-                      <td className={`py-2 text-right font-mono ${m.sharpe > 1 ? "text-green-400" : m.sharpe < 0 ? "text-red-400" : "text-gray-300"}`}>
+                      <td className="py-2 text-right font-mono text-gray-600">{(m.vol * 100).toFixed(1)}%</td>
+                      <td className={`py-2 text-right font-mono ${m.sharpe > 1 ? "text-green-400" : m.sharpe < 0 ? "text-red-400" : "text-gray-600"}`}>
                         {m.sharpe.toFixed(2)}
                       </td>
                       <td className="py-2 text-right font-mono text-red-400">{(m.mdd * 100).toFixed(1)}%</td>
@@ -260,7 +260,7 @@ export default function MultiCompareClient({ assets }: Props) {
 
       {/* 상관관계 매트릭스 */}
       {corrMatrix.length >= 2 && (
-        <section className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+        <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
           <h2 className="mb-3 font-semibold">상관관계 매트릭스</h2>
           <div className="overflow-x-auto">
             <table className="text-xs">
@@ -268,14 +268,14 @@ export default function MultiCompareClient({ assets }: Props) {
                 <tr>
                   <th />
                   {sliced.map((a) => (
-                    <th key={a.ticker} className="px-2 py-1 text-center text-gray-400">{a.ticker}</th>
+                    <th key={a.ticker} className="px-2 py-1 text-center text-gray-500">{a.ticker}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {sliced.map((a, i) => (
                   <tr key={a.ticker}>
-                    <td className="pr-2 text-right text-gray-400">
+                    <td className="pr-2 text-right text-gray-500">
                       <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: ASSET_CLASS_COLORS[a.assetType] }} />
                       {" "}{a.ticker}
                     </td>

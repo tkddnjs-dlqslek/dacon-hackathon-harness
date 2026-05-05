@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 // visualization.md §1.1: 단일 값 비교 (N≤8) → Bar Chart (가로), 정렬: 값 내림차순
 // 11개 섹터이므로 세로 가로 혼용 — 가로 바로 구현
@@ -27,20 +27,20 @@ export default function SectorBarChart({ data, label = "Return" }: Props) {
   return (
     <ResponsiveContainer width="100%" height={Math.max(250, data.length * 30)}>
       <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 30, left: 80, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" horizontal={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
         <XAxis
           type="number"
-          tick={{ fontSize: 10, fill: "#6b7280" }}
+          tick={{ fontSize: 10, fill: "#374151" }}
           tickFormatter={(v: number) => `${v}%`}
         />
         <YAxis
           type="category"
           dataKey="name"
-          tick={{ fontSize: 11, fill: "#9ca3af" }}
+          tick={{ fontSize: 11, fill: "#374151" }}
           width={100}
         />
         <Tooltip
-          contentStyle={{ backgroundColor: "#111827", border: "1px solid #374151", borderRadius: 8 }}
+          contentStyle={{ backgroundColor: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 8 }}
           formatter={(value) => [`${Number(value).toFixed(1)}%`, label]}
         />
         <Bar dataKey="value" radius={[0, 4, 4, 0]}>

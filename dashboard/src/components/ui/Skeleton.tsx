@@ -1,12 +1,12 @@
-// 로딩 스켈레톤 - 통일된 컴포넌트
+﻿// 로딩 스켈레톤 - 통일된 컴포넌트
 
 export function Skeleton({ className = "" }: { className?: string }) {
-  return <div className={`animate-pulse rounded bg-gray-800 ${className}`} />;
+  return <div className={`animate-pulse rounded bg-gray-100 ${className}`} />;
 }
 
 export function SkeletonCard() {
   return (
-    <div className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+    <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
       <Skeleton className="h-3 w-20" />
       <Skeleton className="mt-2 h-8 w-24" />
     </div>
@@ -15,17 +15,17 @@ export function SkeletonCard() {
 
 export function SkeletonChart({ height = 300 }: { height?: number }) {
   return (
-    <div className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+    <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
       <Skeleton className="mb-3 h-5 w-40" />
       <Skeleton className={`w-full`} />
-      <div style={{ height }} className="animate-pulse rounded bg-gray-800" />
+      <div style={{ height }} className="animate-pulse rounded bg-gray-100" />
     </div>
   );
 }
 
 export function SkeletonTable({ rows = 5 }: { rows?: number }) {
   return (
-    <div className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+    <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
       <Skeleton className="mb-4 h-5 w-32" />
       <div className="space-y-2">
         {Array.from({ length: rows }).map((_, i) => (
