@@ -5,7 +5,8 @@
 // 외부 API 키 불필요 — 100% 결정론적·즉시 응답
 
 import { ASSET_CLASS_LABELS } from "@/types";
-import type { AssetType } from "@/types";
+import type { AssetType, OHLCV } from "@/types";
+import { krwAdjustedReturn } from "@/lib/analysis-engine";
 
 export interface MarketSignals {
   vix?: number;
@@ -13,6 +14,9 @@ export interface MarketSignals {
   topGainers: { ticker: string; ret: number; assetType: string }[];
   topLosers: { ticker: string; ret: number; assetType: string }[];
   period: string;
+  // 서학개미 핵심 지표 — SPY 등 대표 USD 자산 + USDKRW 시계열 (선택)
+  usdAssetData?: OHLCV[];
+  usdkrwData?: OHLCV[];
 }
 
 export interface MarketSummary {
@@ -68,6 +72,17 @@ function buildSummaryText(s: MarketSignals, regime: MarketSummary["regime"]): st
   if (s.topGainers.length > 0) {
     const lead = s.topGainers[0];
     parts.push(`상승 선두 ${lead.ticker} ${fmtPct(lead.ret)}`);
+  }
+
+  // 서학개미 인사이트 — SPY USD 수익률을 KRW로 환산한 실질 수익
+  if (s.usdAssetData && s.usdkrwData) {
+    const krw = krwAdjustedReturn(s.usdAssetData, s.usdkrwData);
+    if (Math.abs(krw.fxReturn) > 0.01) {
+      const fxTag = krw.fxReturn > 0 ? "달러 강세" : "원화 강세";
+      parts.push(
+        `${fxTag} ${fmtPct(krw.fxReturn)} → SPY 원화 환산 ${fmtPct(krw.krwReturn)} (USD ${fmtPct(krw.usdReturn)})`
+      );
+    }
   }
 
   const regimeMsg: Record<MarketSummary["regime"], string> = {

@@ -85,9 +85,8 @@ interface DataAdapter {
 
 | 어댑터 | 지원 자산 타입 | 비고 |
 |--------|--------------|------|
-| `yfinance` | 전체 6종 | 1차 소스, API 키 불필요 |
-| `staticJson` | 전체 6종 | yfinance 장애 시 fallback |
-| `csv` (계획) | 전체 6종 | 사용자 업로드 지원 (Phase 4) |
+| `yfinance` | 전체 6종 | 1차 소스, API 키 불필요 (`lib/adapters/yfinance.ts`) |
+| `csv` | 전체 6종 | 사용자 업로드 / 정적 fallback (`lib/adapters/csv.ts`) |
 
 ---
 

@@ -168,7 +168,17 @@ export default function MultiAssetDashboard({ assets, universe, insights }: Prop
         ? (tnxAsset.data.at(-1)!.close - irxAsset.data.at(-1)!.close)
         : undefined;
 
-    setAiSummary(generateMarketSummary({ topGainers, topLosers, vix, yieldCurveSlope, period: period.label }));
+    // 서학개미 KRW 환산 — SPY + USDKRW 시계열을 같은 기간(period.days)으로 슬라이스
+    const spyAsset = assets.find((a) => a.ticker === "SPY");
+    const usdkrwAsset = assets.find((a) => a.ticker === "USDKRW=X");
+    const slice = (data: OHLCV[]) => period.days === 0 ? data : data.slice(-period.days);
+    const usdAssetData = spyAsset ? slice(spyAsset.data) : undefined;
+    const usdkrwData = usdkrwAsset ? slice(usdkrwAsset.data) : undefined;
+
+    setAiSummary(generateMarketSummary({
+      topGainers, topLosers, vix, yieldCurveSlope, period: period.label,
+      usdAssetData, usdkrwData,
+    }));
   };
 
   const toggleType = (t: AssetType) => {
