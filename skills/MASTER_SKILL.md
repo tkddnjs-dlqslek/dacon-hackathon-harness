@@ -27,12 +27,13 @@
 
 | 파일 | 역할 |
 |------|------|
-| `MASTER_SKILL.md` | 시스템 철학, 자산 레지스트리, 전체 흐름 |
+| `MASTER_SKILL.md` | 시스템 철학, 자산 레지스트리, 페르소나 레지스트리, 전체 파이프라인 |
 | `data-schema.md` | 통일 데이터 스키마, 어댑터 프로토콜, 데이터 품질 규칙 |
-| `data-analysis.md` | 공통 지표 + 자산별 특화 지표 계산 규칙 |
+| `data-analysis.md` | 공통 지표 + 자산별 특화 지표 + KRW 환산 + 매크로 신호 + Worked Examples |
 | `visualization.md` | 데이터 특성별 차트 선택 + 자산 타입별 색상 |
-| `insight-generation.md` | 자산별 인사이트 + 크로스 에셋 인사이트 |
-| `report-layout.md` | 페이지 템플릿 + 멀티 에셋 레이아웃 |
+| `insight-generation.md` | 자산별·크로스에셋·페르소나 인사이트 + 임계값 근거 |
+| `report-layout.md` | 11개 페이지 템플릿 + 반응형 그리드 |
+| `code-mapping.md` | Skills 규칙 → 코드 함수 1:1 매핑 + 영향 범위 + 바이브코딩 증거 |
 
 ## 4. 처리 파이프라인
 

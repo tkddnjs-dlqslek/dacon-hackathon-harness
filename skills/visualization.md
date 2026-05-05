@@ -4,23 +4,34 @@
 
 데이터의 특성에 따라 차트 유형을 자동 결정한다. 하드코딩된 매핑이 아닌 데이터 특성 기반 분기.
 
-### 1.1 선택 매트릭스
+### 1.1 선택 매트릭스 — 구현된 8가지
 
-| 데이터 특성 | 목적 | 차트 유형 | 구현 파일 | 상태 |
-|------------|------|----------|----------|------|
-| 시계열 + 단일 종목 | 추세 확인 | Line Chart | CumulativeReturnChart (seriesCount=1) | ✅ |
-| 시계열 + 다중 종목 | 비교 | Multi-line Chart | CumulativeReturnChart.tsx | ✅ |
-| 시계열 + 누적 비중 | 구성 변화 | Stacked Area Chart | — | Phase 3 |
-| 단일 값 비교 | 순위/비교 | Bar Chart (가로/세로) | SectorBarChart.tsx | ✅ |
-| 구성 비율 | 비중 확인 | Donut Chart | SectorDonutChart.tsx | ✅ |
-| 2변수 관계 | 상관관계 | Scatter Plot | — | Phase 3 |
-| N×N 관계 | 상관 매트릭스 | Heatmap | page.tsx (HTML table 기반) | ✅ |
-| 분포 | 수익률 분포 | Histogram | — | Phase 3 |
-| 단일 KPI | 핵심 수치 강조 | Metric Card | 인라인 JSX (각 페이지) | ✅ |
-| 최대 낙폭 | 리스크 시각화 | Area Chart (음영) | — | Phase 3 |
-| A vs B 시계열 | 두 전략 비교 | Dual Line Chart | DualLineChart.tsx | ✅ |
-| A vs B 단일값 비교 | 지표별 비교 | Grouped Bar Chart | GroupedBarChart.tsx | ✅ |
-| 비용 누적 비교 | 시간에 따른 비용 | Stacked Area (2계열) | — | Phase 3 |
+본 시스템은 8가지 데이터 특성을 7가지 차트 컴포넌트로 매핑한다. 일부 특성은 동일 컴포넌트의 props 분기로 처리(예: 시계열 단일/다중은 series 배열 길이로 자동 분기).
+
+| 데이터 특성 | 목적 | 차트 유형 | 구현 파일 |
+|------------|------|----------|----------|
+| 시계열 + 단일 종목 | 추세 확인 | Line Chart | CumulativeReturnChart (seriesCount=1) |
+| 시계열 + 다중 종목 | 비교 | Multi-line Chart | CumulativeReturnChart.tsx |
+| 단일 값 비교 (N≤8) | 순위/비교 | Bar Chart (가로) | SectorBarChart.tsx |
+| 구성 비율 | 비중 확인 | Donut Chart | SectorDonutChart.tsx |
+| N×N 관계 | 상관 매트릭스 | Heatmap | page.tsx (HTML table 기반) |
+| 단일 KPI | 핵심 수치 강조 | Metric Card | 인라인 JSX (각 페이지) |
+| A vs B 시계열 | 두 전략 비교 | Dual Line Chart | DualLineChart.tsx |
+| A vs B 단일값 비교 | 지표별 비교 | Grouped Bar Chart | GroupedBarChart.tsx |
+
+### 1.2 확장 슬롯 (Phase 4 후보)
+
+본 시스템은 다음 5가지 추가 차트 슬롯을 어댑터 패턴으로 미리 설계해두었다. `chart-selector.ts`의 분기만 추가하면 즉시 활성화 가능. 기본 라이브러리(Recharts)에서 이미 지원하므로 Skills 1줄 + 코드 30줄로 신규 차트 추가 가능.
+
+| 데이터 특성 | 차트 유형 | 활성화 방법 |
+|------------|----------|----------|
+| 시계열 + 누적 비중 | Stacked Area Chart | Recharts `<AreaChart stacked>` |
+| 2변수 관계 (수익 vs 위험) | Scatter Plot | Recharts `<ScatterChart>` — 효율 프론티어용 |
+| 분포 (수익률 히스토그램) | Histogram | bucket 함수 + BarChart |
+| 최대 낙폭 음영 | Area Chart (음영) | DualLineChart에 fillBetween 옵션 |
+| 비용 누적 (2계열) | Stacked Area | Recharts `<AreaChart>` 2계열 |
+
+→ 슬롯이 비어있는 이유: **현재 11페이지의 데이터 시나리오에서 사용처가 발견되지 않음.** 새 페이지·자산 클래스 추가 시 자연스럽게 활성화 예정.
 
 ### 1.2 자동 선택 로직 (의사코드)
 

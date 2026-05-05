@@ -152,3 +152,155 @@ ASSETS["equity_etf"]["NEW_TICKER"] = {"name": "...", "sector": "..."}
 2. `data-analysis.md`에 특화 지표 정의 (선택)
 3. `insight-generation.md`에 임계값 규칙 추가 (선택)
 4. 어댑터의 `supportedTypes`에 추가
+
+---
+
+## 6. Walkthrough — 새 자산 클래스 "REIT" 추가하기
+
+본 시스템의 범용성을 구체적으로 증명하기 위해 가상의 새 자산 클래스 추가 시나리오를 단계별로 설명한다. 이 walkthrough를 따라하면 약 30분 안에 새 자산 타입이 시스템 전체에 통합된다.
+
+### 6.1 시나리오
+부동산 투자 신탁(REIT)을 별도 자산 클래스로 추가하고 싶다. REIT은 주식·ETF의 일종이지만 다음 특성으로 별도 분류 가치가 있다:
+- 배당수익률(dividend yield) 중심 — 가격 수익률만 봐선 부족
+- 금리에 민감 — bond와 상관도 높음
+- 인플레 헤지 효과 — commodity와 유사
+
+### 6.2 단계별 작업
+
+**Step 1: MASTER_SKILL.md 자산 레지스트리에 행 추가**
+```markdown
+| `reit` | 부동산 신탁 | VNQ, IYR, SCHH | 배당수익률, 금리민감도, 가격수익률 |
+```
+
+**Step 2: data-schema.md 3절(필드 표)에 컬럼 추가**
+```
+| metadata.dividendYield | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | 🔵 |
+```
+(reit 열 추가, dividendYield 권장)
+
+**Step 3: data-analysis.md 3절에 특화 지표 추가**
+```markdown
+### 3.7 reit (부동산 신탁)
+
+| 지표 | 공식/방법 | 비고 |
+|------|----------|------|
+| 배당수익률 | metadata.dividendYield | yfinance에서 기본 제공 |
+| 금리 민감도 | ^TNX 대비 베타 (회귀) | 채권과 회귀 |
+| 인플레 헤지 점수 | -상관(reit, 주식) | commodity와 유사 |
+```
+
+**Step 4: insight-generation.md 2절에 인사이트 룰 추가**
+```markdown
+### REIT 전용 (assetType=reit)
+| 조건 | 등급 | 메시지 |
+|------|------|-------|
+| 배당수익률 > 5% | 🟢 | `{ticker} 배당수익률 {value}%로 인컴 우수` |
+| ^TNX 대비 베타 > 1.5 | 🟡 | `{ticker} 금리 민감도 베타 {value} - 금리 상승 시 가격 하락 위험` |
+```
+
+**Step 5: insight-generation.md 11절에 임계값 근거 추가**
+```markdown
+### 11.12 REIT 임계 (2절)
+| 임계 | 근거 |
+|------|------|
+| 배당수익률 > 5% | NAREIT 평균 4.0%(2010-2024), 5%는 상위 30% |
+| 금리 베타 > 1.5 | VNQ historical 베타 1.2, 1.5는 평균보다 25% 높음 |
+```
+
+**Step 6: 코드 변경 (자동화 후보)**
+```typescript
+// dashboard/src/types/index.ts
+export type AssetType =
+  | "equity_etf" | "bond" | "fx" | "commodity" | "crypto" | "index"
+  | "reit"; // 추가
+
+export const ASSET_CLASS_LABELS: Record<AssetType, string> = {
+  equity_etf: "주식 / ETF",
+  bond: "채권 / 금리",
+  fx: "외환",
+  commodity: "원자재",
+  crypto: "암호화폐",
+  index: "시장 지수",
+  reit: "부동산 신탁", // 추가
+};
+
+export const ASSET_CLASS_COLORS: Record<AssetType, string> = {
+  // ... 기존
+  reit: "#A855F7", // 보라색
+};
+```
+
+```typescript
+// dashboard/src/lib/asset-profiles.ts
+export const ASSET_PROFILES: Record<AssetType, AssetProfile> = {
+  // ... 기존 6개
+  reit: {
+    type: "reit",
+    label: "부동산 신탁",
+    description: "REIT — 부동산 투자 신탁. 배당과 금리 민감도 중심.",
+    valueMode: "price",
+    valueLabel: "가격",
+    valueUnit: "$",
+    metrics: [
+      ...COMMON_METRICS,
+      { key: "dividendYield", label: "배당수익률", applicable: true, unit: "%" },
+      { key: "rateBeta", label: "금리 베타", applicable: true, unit: "ratio" },
+    ],
+  },
+};
+```
+
+```typescript
+// dashboard/src/lib/adapters/index.ts
+export function inferAssetType(ticker: string): AssetType {
+  if (REIT_TICKERS.has(ticker)) return "reit"; // 추가
+  // ... 기존 로직
+}
+```
+
+**Step 7: 데이터 수집 (collect.py)**
+```python
+ASSETS["reit"] = {
+    "VNQ": {"name": "Vanguard Real Estate ETF"},
+    "IYR": {"name": "iShares U.S. Real Estate ETF"},
+    "SCHH": {"name": "Schwab U.S. REIT ETF"},
+}
+```
+
+**Step 8: 검증**
+- `/asset-class/reit` 페이지 자동 생성 (Next.js dynamic route)
+- 메인 대시보드 자산 클래스 칩에 "부동산 신탁" 추가됨
+- 인사이트 생성기가 reit 자산도 평가
+- 차트 색상이 보라색으로 일관성 유지
+
+### 6.3 작업 분해 표
+
+| 단계 | 작업 | 위치 | 라인 수 | 예상 시간 |
+|------|------|------|--------|---------|
+| 1 | MASTER_SKILL.md 행 추가 | Skills | 1줄 | 1분 |
+| 2 | data-schema.md 컬럼 추가 | Skills | 1줄 | 1분 |
+| 3 | data-analysis.md 3.7절 신설 | Skills | 10줄 | 5분 |
+| 4 | insight-generation.md 룰 추가 | Skills | 6줄 | 5분 |
+| 5 | insight-generation.md 임계 근거 | Skills | 4줄 | 5분 |
+| 6 | TypeScript 타입·레지스트리 | Code | 15줄 | 5분 |
+| 7 | collect.py 자산 추가 | Code | 5줄 | 2분 |
+| 8 | dev 서버 확인 | - | - | 5분 |
+
+**총합: 약 30분, Skills 21줄 + Code 20줄.** 새 자산 클래스가 시스템 전체에 통합됨.
+
+### 6.4 자동화 가능성
+
+위 8단계 중 1~5단계(Skills 수정)만 사람이 한다면, 6~7단계(코드 수정)는 Claude Code가 `code-mapping.md`의 매핑 표를 보고 자동 생성 가능. 즉:
+
+- **사람**: Skills 5분 작성
+- **AI**: 25분 작업을 자동으로 수행 (타입 추가, 레지스트리 등록, 데이터 수집 스크립트 수정)
+
+이것이 본 시스템이 주장하는 **"바이브코딩 = 문서가 코드를 만든다"** 의 구체적 증거다.
+
+### 6.5 다른 확장 시나리오
+
+같은 패턴으로 다음 자산 클래스도 추가 가능:
+- **ESG 점수**: 새 단면(snapshot) 데이터 형식 + ESG 점수 어댑터
+- **Private Equity Index**: index 타입 확장 + 분기별 평가가
+- **Carbon Credit**: commodity 변형 + 정책 의존성 인사이트
+- **NFT Floor Price**: crypto 변형 + 유동성 지표 추가
