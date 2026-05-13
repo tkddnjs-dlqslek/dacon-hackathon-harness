@@ -28,14 +28,16 @@ interface AssetWithMetrics {
 }
 
 function calc(asset: Asset): AssetWithMetrics | null {
-  const data = asset.data.slice(-252);
+  // data-analysis.md 1.3절 — crypto N=365, 그 외 N=252
+  const N = asset.assetType === "crypto" ? 365 : 252;
+  const data = asset.data.slice(-N);
   if (data.length < 30) return null;
   const ret = data[data.length - 1].close / data[0].close - 1;
   const drs: number[] = [];
   for (let i = 1; i < data.length; i++) drs.push(data[i].close / data[i - 1].close - 1);
   const mean = drs.reduce((a, b) => a + b, 0) / drs.length;
-  const vol = Math.sqrt(drs.reduce((s, r) => s + (r - mean) ** 2, 0) / (drs.length - 1)) * Math.sqrt(252);
-  const annRet = Math.pow(1 + ret, 252 / data.length) - 1;
+  const vol = Math.sqrt(drs.reduce((s, r) => s + (r - mean) ** 2, 0) / (drs.length - 1)) * Math.sqrt(N);
+  const annRet = Math.pow(1 + ret, N / data.length) - 1;
   const sharpe = vol === 0 ? 0 : (annRet - 0.04) / vol;
   let peak = data[0].close, mdd = 0;
   for (const d of data) { if (d.close > peak) peak = d.close; const dd = (d.close - peak) / peak; if (dd < mdd) mdd = dd; }

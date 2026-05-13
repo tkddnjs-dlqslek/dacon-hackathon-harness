@@ -76,18 +76,20 @@ async function testPark(browser) {
   const startTime = Date.now();
   let clickCount = 0;
 
-  // 1. 메인 진입
-  await page.goto(`${BASE}/`, { waitUntil: "load", timeout: 60000 });
+  // 1. 메인 진입 — 박정숙은 defensive 페르소나로 시작 (URL ?persona= 검증)
+  await page.goto(`${BASE}/?persona=defensive`, { waitUntil: "load", timeout: 60000 });
   await new Promise((r) => setTimeout(r, 2500));
-  result.steps.push({ step: "메인 진입", elapsed: Date.now() - startTime });
+  result.steps.push({ step: "메인 진입 (defensive 페르소나)", elapsed: Date.now() - startTime });
   await snap(page, persona, "1_main");
 
-  // 2. "처음이신가요?" 배너 보이는지 (UX 가점)
+  // 2. "처음이신가요?" 배너 + 페르소나 배너 확인
   const bannerVisible = await hasText(page, "처음이신가요?");
   if (!bannerVisible) result.bottlenecks.push("초보자용 진입 배너 없음");
+  const personaVisible = await hasText(page, "안정형");
+  if (!personaVisible) result.bottlenecks.push("defensive 페르소나 배너 누락");
 
-  // 3. 자산 클래스 필터에서 "채권/금리"만 남기기 (다른 5개 끄기)
-  const turnOff = ["주식 / ETF", "외환", "원자재", "암호화폐", "시장 지수"];
+  // 3. defensive 기본 활성: bond/commodity/equity_etf. 원자재·주식 끄기 → 채권만 남음
+  const turnOff = ["주식 / ETF", "원자재"];
   for (const label of turnOff) {
     const ok = await clickByText(page, "button", label);
     if (ok) clickCount++;

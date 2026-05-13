@@ -1,31 +1,125 @@
 @import "tailwindcss";
 
-/* ── 디자인 토큰 — 화이트 베이스, 강조 빨강/초록만 ── */
-:root {
+/* ============================================================
+   디자인 토큰 — 3 테마 시스템 (라이트 채도 / Bloomberg 다크 / Navy 다크)
+   data-theme="light" (기본) | "bloomberg" | "navy"
+   ============================================================ */
+
+:root,
+[data-theme="light"] {
   /* 배경 */
-  --bg-base:    #FFFFFF;
-  --bg-surface: #F7F7F7;
-  --bg-elevated:#EFEFEF;
+  --bg-base:    #FAFAFA;
+  --bg-surface: #FFFFFF;
+  --bg-elevated:#F0F2F5;
+  --bg-overlay: rgba(255, 255, 255, 0.85);
 
   /* 텍스트 */
-  --text-primary:   #0C0C0C;
-  --text-secondary: #444444;
-  --text-muted:     #888888;
+  --text-primary:   #0A0A0A;
+  --text-secondary: #3A3A3A;
+  --text-muted:     #6B7280;
 
   /* 경계선 */
-  --border:        #E0E0E0;
-  --border-subtle: #F0F0F0;
+  --border:        #D9DCE0;
+  --border-subtle: #ECEEF1;
 
-  /* 강조 — 수익/손실만 */
-  --positive: #16a34a;   /* green-600 */
-  --negative: #dc2626;   /* red-600 */
+  /* 강조 */
+  --positive: #16a34a;
+  --negative: #dc2626;
+  --neutral:  #6B7280;
+  --accent:   #2563EB;   /* 라이트 메인 액센트 (파랑) */
+
+  /* 차트 음영 (수익률 영역) */
+  --chart-positive-fill: rgba(22, 163, 74, 0.12);
+  --chart-negative-fill: rgba(220, 38, 38, 0.10);
+  --chart-grid:          #E5E7EB;
+  --chart-crosshair:     rgba(0, 0, 0, 0.45);
+
+  /* 그림자 */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+
+  /* 글래스모피즘 */
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-blur: blur(10px);
 
   /* 타이포 */
-  --font-sans: var(--font-inter), var(--font-noto-sans-kr), sans-serif;
-  --font-mono: var(--font-ibm-plex-mono), monospace;
+  --font-sans: "Pretendard Variable", Pretendard, var(--font-noto-sans-kr), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: var(--font-ibm-plex-mono), "JetBrains Mono", Consolas, monospace;
   --font-size-base: 14px;
 
-  --radius-card: 4px;
+  --radius-card: 8px;
+  --radius-pill: 999px;
+
+  color-scheme: light;
+}
+
+/* Bloomberg Terminal 풍 다크 — 검정 배경 + 형광 강조 */
+[data-theme="bloomberg"] {
+  --bg-base:    #0a0a0a;
+  --bg-surface: #141414;
+  --bg-elevated:#1c1c1c;
+  --bg-overlay: rgba(20, 20, 20, 0.92);
+
+  --text-primary:   #f5f5f5;
+  --text-secondary: #c8c8c8;
+  --text-muted:     #888888;
+
+  --border:        #2a2a2a;
+  --border-subtle: #1c1c1c;
+
+  --positive: #00ff7f;   /* 형광 그린 */
+  --negative: #ff6b6b;
+  --neutral:  #ffaa33;
+  --accent:   #ff9500;   /* Bloomberg 시그니처 오렌지 */
+
+  --chart-positive-fill: rgba(0, 255, 127, 0.15);
+  --chart-negative-fill: rgba(255, 107, 107, 0.12);
+  --chart-grid:          #1c1c1c;
+  --chart-crosshair:     rgba(255, 255, 255, 0.5);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.7), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.9), 0 2px 6px rgba(0, 0, 0, 0.4);
+
+  --glass-bg: rgba(20, 20, 20, 0.72);
+  --glass-blur: blur(12px);
+
+  color-scheme: dark;
+}
+
+/* 금융 클래식 Navy 다크 — 짙은 네이비 + 골드 액센트 */
+[data-theme="navy"] {
+  --bg-base:    #0B1E3F;
+  --bg-surface: #142A55;
+  --bg-elevated:#1B3568;
+  --bg-overlay: rgba(20, 42, 85, 0.92);
+
+  --text-primary:   #F2F4F8;
+  --text-secondary: #B8C2D4;
+  --text-muted:     #7B8AA8;
+
+  --border:        #234478;
+  --border-subtle: #1B3568;
+
+  --positive: #4ADE80;
+  --negative: #F87171;
+  --neutral:  #D4AF37;
+  --accent:   #D4AF37;   /* 골드 */
+
+  --chart-positive-fill: rgba(74, 222, 128, 0.15);
+  --chart-negative-fill: rgba(248, 113, 113, 0.12);
+  --chart-grid:          #1B3568;
+  --chart-crosshair:     rgba(212, 175, 55, 0.6);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.3);
+
+  --glass-bg: rgba(20, 42, 85, 0.72);
+  --glass-blur: blur(12px);
+
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -44,25 +138,87 @@ body {
   color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* ── 숫자 고정폭 ── */
-.tabular-nums, [data-numeric], .metric-value, .price, .return-pct {
+/* ── 숫자·티커 — IBM Plex Mono, 등폭 표 정렬 ── */
+.tabular-nums, [data-numeric], .metric-value, .price, .return-pct, .font-mono {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums lining-nums;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
+  font-feature-settings: "tnum", "lnum";
 }
+
+/* ── 자릿수 정렬을 위한 우측 정렬 + 패딩 ── */
+.num-right { text-align: right; font-variant-numeric: tabular-nums; }
 
 .text-positive { color: var(--positive); }
 .text-negative { color: var(--negative); }
+.text-neutral  { color: var(--neutral); }
+.text-accent   { color: var(--accent); }
 
-/* ── 카드 ── */
+/* ── 카드 (D3 그림자 + 글래스모피즘 옵션) ── */
 .card {
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.card-elevated {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-md);
+}
+
+.card-interactive {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+.card-interactive:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+  border-color: var(--accent);
+}
+
+.card-glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-md);
+}
+
+/* ── 페르소나·테마 셀렉터 작은 칩 ── */
+.theme-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.theme-chip:hover { color: var(--text-primary); border-color: var(--accent); }
+.theme-chip[data-active="true"] {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
 }
 
 /* ── range input 트랙 색상 ── */
@@ -76,22 +232,22 @@ input[type="range"] {
 input[type="range"]::-webkit-slider-runnable-track {
   background: linear-gradient(
     to right,
-    var(--slider-fill, #E5E7EB) 0%,
-    var(--slider-fill, #E5E7EB) var(--slider-pct, 0%),
-    #E5E7EB var(--slider-pct, 0%),
-    #E5E7EB 100%
+    var(--slider-fill, var(--border)) 0%,
+    var(--slider-fill, var(--border)) var(--slider-pct, 0%),
+    var(--border) var(--slider-pct, 0%),
+    var(--border) 100%
   );
   height: 4px;
   border-radius: 2px;
 }
 input[type="range"]::-moz-range-track {
-  background: #E5E7EB;
+  background: var(--border);
   height: 4px;
   border-radius: 2px;
   border: none;
 }
 input[type="range"]::-moz-range-progress {
-  background: var(--slider-fill, #3B82F6);
+  background: var(--slider-fill, var(--accent));
   height: 4px;
   border-radius: 2px;
 }
@@ -103,6 +259,7 @@ input[type="range"]::-webkit-slider-thumb {
   background: currentColor;
   cursor: pointer;
   margin-top: -5px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 input[type="range"]::-moz-range-thumb {
   width: 14px;
@@ -111,10 +268,11 @@ input[type="range"]::-moz-range-thumb {
   background: currentColor;
   cursor: pointer;
   border: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
 /* ── 스크롤바 ── */
-::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg-base); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
@@ -128,12 +286,180 @@ th {
   letter-spacing: 0.07em;
   text-transform: uppercase;
   border-bottom: 1px solid var(--border);
-  padding: 5px 10px;
+  padding: 6px 10px;
   text-align: left;
+  background: var(--bg-base);
 }
 td {
-  padding: 6px 10px;
+  padding: 7px 10px;
   border-bottom: 1px solid var(--border-subtle);
   font-size: 13px;
 }
-tr:hover td { background: var(--bg-surface); }
+tr:hover td { background: var(--bg-elevated); }
+
+/* ── 차트 음영 영역 (C1) ── */
+.recharts-area-area-positive { fill: var(--chart-positive-fill); }
+.recharts-area-area-negative { fill: var(--chart-negative-fill); }
+
+/* ── 차트 grid·crosshair 색상 ── */
+.recharts-cartesian-grid line {
+  stroke: var(--chart-grid) !important;
+}
+.recharts-tooltip-cursor {
+  stroke: var(--chart-crosshair) !important;
+  stroke-width: 1 !important;
+  stroke-dasharray: 3 3 !important;
+}
+
+/* ── 라인 하이라이트 (C-3) — 흐릿한 라인 ── */
+.recharts-line[data-faded="true"] {
+  opacity: 0.18;
+}
+.recharts-line[data-highlighted="true"] {
+  stroke-width: 2.5px !important;
+}
+
+/* ── 스파크라인 (E2) ── */
+.sparkline { display: inline-block; vertical-align: middle; }
+
+/* ── 히어로 영역 (E1) ── */
+.hero-card {
+  background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-elevated) 100%);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  overflow: hidden;
+}
+.hero-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top right, var(--accent) 0%, transparent 60%);
+  opacity: 0.08;
+  pointer-events: none;
+}
+
+/* ── 페이지 진입 fade-in ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.35s ease-out both; }
+
+/* ============================================================
+   D3 — 카드 그림자 자동 적용
+   기존 컴포넌트의 .rounded-lg.border 패턴을 자동으로 입체화
+   ============================================================ */
+
+section.rounded-lg.border,
+section.rounded-lg.border-2,
+div.rounded-lg.border.bg-gray-50,
+div.rounded-lg.border.bg-white,
+div.rounded-lg.border.bg-gray-100 {
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+section.rounded-lg.border:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* hero/KPI 카드만 더 강한 그림자 */
+.kpi-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+.kpi-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+  transform: translateY(-1px);
+}
+
+/* ============================================================
+   다크 테마 — Tailwind utility class 오버라이드
+   (기존 컴포넌트 코드 수정 없이 테마 전환 가능하도록 변수 매핑)
+   ============================================================ */
+
+[data-theme="bloomberg"] .bg-white,
+[data-theme="navy"]      .bg-white         { background-color: var(--bg-surface) !important; }
+[data-theme="bloomberg"] .bg-gray-50,
+[data-theme="navy"]      .bg-gray-50       { background-color: var(--bg-surface) !important; }
+[data-theme="bloomberg"] .bg-gray-100,
+[data-theme="navy"]      .bg-gray-100      { background-color: var(--bg-elevated) !important; }
+[data-theme="bloomberg"] .bg-gray-200,
+[data-theme="navy"]      .bg-gray-200      { background-color: var(--bg-elevated) !important; }
+[data-theme="bloomberg"] .bg-gray-900,
+[data-theme="navy"]      .bg-gray-900      { background-color: var(--accent) !important; }
+
+[data-theme="bloomberg"] .text-gray-900,
+[data-theme="navy"]      .text-gray-900    { color: var(--text-primary) !important; }
+[data-theme="bloomberg"] .text-gray-800,
+[data-theme="navy"]      .text-gray-800    { color: var(--text-primary) !important; }
+[data-theme="bloomberg"] .text-gray-700,
+[data-theme="navy"]      .text-gray-700    { color: var(--text-secondary) !important; }
+[data-theme="bloomberg"] .text-gray-600,
+[data-theme="navy"]      .text-gray-600    { color: var(--text-secondary) !important; }
+[data-theme="bloomberg"] .text-gray-500,
+[data-theme="navy"]      .text-gray-500    { color: var(--text-muted) !important; }
+[data-theme="bloomberg"] .text-gray-400,
+[data-theme="navy"]      .text-gray-400    { color: var(--text-muted) !important; }
+[data-theme="bloomberg"] .text-white,
+[data-theme="navy"]      .text-white       { color: #FFFFFF !important; }
+
+[data-theme="bloomberg"] .border-gray-100,
+[data-theme="navy"]      .border-gray-100,
+[data-theme="bloomberg"] .border-gray-200,
+[data-theme="navy"]      .border-gray-200,
+[data-theme="bloomberg"] .border-gray-300,
+[data-theme="navy"]      .border-gray-300  { border-color: var(--border) !important; }
+
+/* 인사이트 카드 색상 — 다크 테마에선 좀 더 진한 배경 */
+[data-theme="bloomberg"] .bg-red-50,
+[data-theme="navy"]      .bg-red-50        { background-color: rgba(220, 38, 38, 0.12) !important; }
+[data-theme="bloomberg"] .bg-yellow-50,
+[data-theme="navy"]      .bg-yellow-50     { background-color: rgba(245, 158, 11, 0.12) !important; }
+[data-theme="bloomberg"] .bg-green-50,
+[data-theme="navy"]      .bg-green-50      { background-color: rgba(22, 163, 74, 0.12) !important; }
+[data-theme="bloomberg"] .bg-blue-50,
+[data-theme="navy"]      .bg-blue-50       { background-color: rgba(37, 99, 235, 0.12) !important; }
+[data-theme="bloomberg"] .bg-red-950,
+[data-theme="navy"]      .bg-red-950       { background-color: rgba(220, 38, 38, 0.18) !important; }
+
+[data-theme="bloomberg"] .text-red-700,
+[data-theme="navy"]      .text-red-700,
+[data-theme="bloomberg"] .text-red-400,
+[data-theme="navy"]      .text-red-400     { color: var(--negative) !important; }
+[data-theme="bloomberg"] .text-green-700,
+[data-theme="navy"]      .text-green-700,
+[data-theme="bloomberg"] .text-green-400,
+[data-theme="navy"]      .text-green-400   { color: var(--positive) !important; }
+[data-theme="bloomberg"] .text-yellow-800,
+[data-theme="navy"]      .text-yellow-800  { color: var(--neutral) !important; }
+[data-theme="bloomberg"] .text-blue-700,
+[data-theme="navy"]      .text-blue-700,
+[data-theme="bloomberg"] .text-blue-600,
+[data-theme="navy"]      .text-blue-600,
+[data-theme="bloomberg"] .text-blue-500,
+[data-theme="navy"]      .text-blue-500    { color: var(--accent) !important; }
+
+/* 호버 색상 다크 모드에서 자연스럽게 */
+[data-theme="bloomberg"] .hover\:bg-gray-100:hover,
+[data-theme="navy"]      .hover\:bg-gray-100:hover  { background-color: var(--bg-elevated) !important; }
+[data-theme="bloomberg"] .hover\:bg-gray-50:hover,
+[data-theme="navy"]      .hover\:bg-gray-50:hover   { background-color: var(--bg-elevated) !important; }
+
+/* 메인 페이지 진입 배너 — 페르소나 배너처럼 짙은 배경 */
+[data-theme="bloomberg"] .bg-blue-100,
+[data-theme="navy"]      .bg-blue-100      { background-color: rgba(37, 99, 235, 0.18) !important; }
+
+/* 활성 네비 강조 — 다크 테마에서도 액센트 색상 사용 */
+[data-theme="bloomberg"] .bg-purple-600,
+[data-theme="navy"]      .bg-purple-600    { background-color: var(--accent) !important; }
+[data-theme="bloomberg"] .bg-green-600,
+[data-theme="navy"]      .bg-green-600     { background-color: var(--positive) !important; }

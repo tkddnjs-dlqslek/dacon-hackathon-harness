@@ -34,14 +34,16 @@ const PRESETS: { label: string; tickers: string[] }[] = [
   { label: "한국 시총 톱5", tickers: ["005930.KS", "000660.KS", "035420.KS", "005380.KS", "207940.KS"] },
 ];
 
-function calcMetrics(data: OHLCV[]) {
+// data-analysis.md 1.3절 — crypto는 N=365, 그 외 N=252
+function calcMetrics(data: OHLCV[], assetType?: AssetType) {
   if (data.length < 2) return { ret: 0, vol: 0, mdd: 0, sharpe: 0 };
+  const N = assetType === "crypto" ? 365 : 252;
   const ret = data[data.length - 1].close / data[0].close - 1;
   const dr: number[] = [];
   for (let i = 1; i < data.length; i++) dr.push(data[i].close / data[i - 1].close - 1);
   const mean = dr.reduce((a, b) => a + b, 0) / dr.length;
-  const vol = Math.sqrt(dr.reduce((s, r) => s + (r - mean) ** 2, 0) / (dr.length - 1)) * Math.sqrt(252);
-  const annRet = Math.pow(1 + ret, 252 / data.length) - 1;
+  const vol = Math.sqrt(dr.reduce((s, r) => s + (r - mean) ** 2, 0) / (dr.length - 1)) * Math.sqrt(N);
+  const annRet = Math.pow(1 + ret, N / data.length) - 1;
   const sharpe = vol === 0 ? 0 : (annRet - 0.04) / vol;
   let peak = data[0].close, mdd = 0;
   for (const d of data) { if (d.close > peak) peak = d.close; const dd = (d.close - peak) / peak; if (dd < mdd) mdd = dd; }
@@ -152,7 +154,7 @@ export default function MultiCompareClient({ assets }: Props) {
     ticker: a.ticker,
     name: a.name,
     assetType: a.assetType,
-    ...calcMetrics(a.sliced),
+    ...calcMetrics(a.sliced, a.assetType),
   }));
 
   // 상관관계 행렬

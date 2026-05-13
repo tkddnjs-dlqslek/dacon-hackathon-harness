@@ -15,7 +15,7 @@ interface PageProps {
 
 const METRIC_TOOLTIPS: Record<string, string> = {
   return: "기간 수익률: (현재가 − 시작가) / 시작가",
-  volatility: "연환산 변동성: 일간 수익률 표준편차 × √252. 수치가 클수록 가격 변동이 큼",
+  volatility: "연환산 변동성: 일간 수익률 표준편차 × √N (주식·채권·외환·원자재·지수는 N=252, 암호화폐는 N=365 — 24/7 거래)",
   mdd: "최대 낙폭(MDD): 고점 대비 최대 하락률. −20%이면 고점에서 20% 하락한 적 있다는 뜻",
   sharpe: "샤프 비율: (수익률 − 무위험이자율) / 변동성. 1.0 이상이면 위험 대비 수익이 양호",
   beta: "베타: 시장(S&P 500) 대비 민감도. 1.0 = 시장과 동일 움직임, 2.0 = 시장 2배 변동",
@@ -30,14 +30,16 @@ const METRIC_TOOLTIPS: Record<string, string> = {
 };
 
 // 자산 타입별 지표 계산 (프로파일 기반)
+// data-analysis.md 1.3절: crypto는 24/7 거래 → 1Y = 365일, 그 외 = 252일
 function computeProfileMetrics(asset: Asset, profile: typeof ASSET_PROFILES[AssetType], allAssets: Asset[]) {
   const data = asset.data;
-  const sliced = data.slice(-252); // 1Y
+  const N = asset.assetType === "crypto" ? 365 : 252;
+  const sliced = data.slice(-N); // 1Y
   if (sliced.length < 2) return {};
 
   const result: Record<string, number | string> = {};
   const ret = sliced[sliced.length - 1].close / sliced[0].close - 1;
-  const vol = volatility(sliced);
+  const vol = volatility(sliced, asset.assetType);
   const mdd = maxDrawdown(sliced);
 
   // 공통
@@ -48,7 +50,7 @@ function computeProfileMetrics(asset: Asset, profile: typeof ASSET_PROFILES[Asse
   // 자산 타입별 분기 (Skills.md 3절 기반)
   switch (profile.type) {
     case "equity_etf": {
-      const annRet = Math.pow(1 + ret, 252 / sliced.length) - 1;
+      const annRet = Math.pow(1 + ret, N / sliced.length) - 1;
       result.sharpe = vol === 0 ? 0 : (annRet - 0.04) / vol;
       const spy = allAssets.find((a) => a.ticker === "SPY");
       if (spy) {

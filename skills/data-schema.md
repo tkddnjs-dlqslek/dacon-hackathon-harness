@@ -252,7 +252,7 @@ export const ASSET_PROFILES: Record<AssetType, AssetProfile> = {
 
 ```typescript
 // dashboard/src/lib/adapters/index.ts
-export function inferAssetType(ticker: string): AssetType {
+export function inferAssetTypeFromTicker(ticker: string): AssetType {
   if (REIT_TICKERS.has(ticker)) return "reit"; // 추가
   // ... 기존 로직
 }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
+import ThemeSelector from "./ThemeSelector";
 
 const ASSET_CLASSES = [
   { label: "주식 / ETF", slug: "stocks", color: "#3B82F6" },
@@ -47,11 +48,14 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="border-b border-gray-200 bg-white px-4 py-3 md:px-6">
+    <header className="border-b px-4 py-3 md:px-6" style={{ borderColor: "var(--border)", background: "var(--bg-surface)" }}>
       <div className="mx-auto flex max-w-7xl flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <Link href="/" className="text-base font-bold text-gray-900 md:text-lg">
-          멀티 에셋 투자 분석
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link href="/" className="text-base font-bold md:text-lg" style={{ color: "var(--text-primary)" }}>
+            멀티 에셋 투자 분석
+          </Link>
+          <ThemeSelector />
+        </div>
         <nav className="flex flex-wrap items-center gap-1">
           <Link href="/demo" className={`rounded-md px-3 py-1.5 text-sm transition-colors ${pathname === "/demo" ? "bg-purple-600 text-white" : "text-gray-600 hover:text-gray-900"}`}>
             🎯 둘러보기

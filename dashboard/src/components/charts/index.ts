@@ -3,3 +3,4 @@ export { default as SectorBarChart } from "./SectorBarChart";
 export { default as SectorDonutChart } from "./SectorDonutChart";
 export { default as DualLineChart } from "./DualLineChart";
 export { default as GroupedBarChart } from "./GroupedBarChart";
+export { default as Sparkline } from "./Sparkline";

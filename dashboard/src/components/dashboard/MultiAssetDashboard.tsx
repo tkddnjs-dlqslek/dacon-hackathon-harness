@@ -1,18 +1,76 @@
 ﻿"use client";
 
 import { useState, useMemo } from "react";
-import { CumulativeReturnChart } from "@/components/charts";
+import { CumulativeReturnChart, Sparkline } from "@/components/charts";
 import type { Asset, OHLCV, AssetType, Insight, UniverseAsset } from "@/types";
 import { ASSET_CLASS_COLORS, ASSET_CLASS_LABELS, T } from "@/types";
 import { useSort } from "@/lib/use-sort";
 import { SortIndicator } from "@/components/ui/SortIndicator";
 import { generateMarketSummary, type MarketSummary } from "@/lib/rule-summary";
 
+// E2 — KPI 카드 (스파크라인 포함)
+function KpiCard({
+  label, value, valueClass, spark, sparkColor = "auto",
+}: {
+  label: string;
+  value: string | number;
+  valueClass?: string;
+  spark?: number[];
+  sparkColor?: string;
+}) {
+  return (
+    <div className="kpi-card">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>{label}</p>
+          <p className={`mt-1 text-2xl font-bold tabular-nums ${valueClass ?? ""}`}>{value}</p>
+        </div>
+        {spark && spark.length >= 2 && (
+          <Sparkline values={spark} color={sparkColor} width={64} height={24} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+type PersonaType = "global_investor" | "crypto_hybrid" | "defensive";
+
 interface Props {
   assets: Asset[];
   universe: UniverseAsset[];
   insights: Insight[];
+  persona: PersonaType;
 }
+
+const PERSONA_META: Record<PersonaType, {
+  label: string;
+  emoji: string;
+  description: string;
+  defaultClasses: AssetType[];
+  color: string;
+}> = {
+  global_investor: {
+    label: "서학개미",
+    emoji: "🌎",
+    description: "해외 ETF 투자자 — 환율 조정 실질 수익이 핵심",
+    defaultClasses: ["equity_etf", "index", "fx"],
+    color: "#3B82F6",
+  },
+  crypto_hybrid: {
+    label: "디지털 에셋 투자자",
+    emoji: "₿",
+    description: "코인 + 기술주 — 변동성·BTC 상관·사이클이 핵심",
+    defaultClasses: ["crypto", "equity_etf", "index"],
+    color: "#F97316",
+  },
+  defensive: {
+    label: "안정형 장기 투자자",
+    emoji: "🛡️",
+    description: "채권·금·배당 중심 — MDD·샤프·일드커브가 핵심",
+    defaultClasses: ["bond", "commodity", "equity_etf"],
+    color: "#10B981",
+  },
+};
 
 const PERIODS = [
   { label: "1개월", days: 21 },
@@ -24,13 +82,18 @@ const PERIODS = [
 
 const ASSET_TYPES: AssetType[] = ["equity_etf", "bond", "fx", "commodity", "crypto", "index"];
 
-function calcMetrics(data: OHLCV[]) {
+// data-analysis.md 1.3절 — crypto는 24/7 거래라 N=365, 그 외 N=252
+function annFactor(assetType?: AssetType): number {
+  return assetType === "crypto" ? 365 : 252;
+}
+
+function calcMetrics(data: OHLCV[], assetType?: AssetType) {
   if (data.length < 2) return { ret: 0, vol: 0, mdd: 0 };
   const ret = data[data.length - 1].close / data[0].close - 1;
   const dr: number[] = [];
   for (let i = 1; i < data.length; i++) dr.push(data[i].close / data[i - 1].close - 1);
   const mean = dr.reduce((a, b) => a + b, 0) / dr.length;
-  const vol = Math.sqrt(dr.reduce((s, r) => s + (r - mean) ** 2, 0) / (dr.length - 1)) * Math.sqrt(252);
+  const vol = Math.sqrt(dr.reduce((s, r) => s + (r - mean) ** 2, 0) / (dr.length - 1)) * Math.sqrt(annFactor(assetType));
   let peak = data[0].close, mdd = 0;
   for (const d of data) { if (d.close > peak) peak = d.close; const dd = (d.close - peak) / peak; if (dd < mdd) mdd = dd; }
   return { ret, vol, mdd };
@@ -84,7 +147,7 @@ function SortableAllAssetsTable({
     ticker: a.ticker,
     name: a.name,
     assetType: a.assetType,
-    ...calcMetrics(a.sliced),
+    ...calcMetrics(a.sliced, a.assetType),
   }));
 
   const { sortedData, sort, handleSort } = useSort<(typeof rows)[number], SortColumn>(rows, "ret", "desc");
@@ -142,9 +205,13 @@ const REGIME_STYLE: Record<string, string> = {
   "리스크 오프": "bg-red-50 border-red-300 text-red-600",
 };
 
-export default function MultiAssetDashboard({ assets, universe, insights }: Props) {
+export default function MultiAssetDashboard({ assets, universe, insights, persona }: Props) {
+  const personaMeta = PERSONA_META[persona];
   const [periodIdx, setPeriodIdx] = useState(3); // 1Y
-  const [selectedTypes, setSelectedTypes] = useState<Set<AssetType>>(new Set(ASSET_TYPES));
+  // 페르소나별 default 자산 클래스 필터 — 강조 자산만 켠 상태로 시작
+  const [selectedTypes, setSelectedTypes] = useState<Set<AssetType>>(
+    new Set(personaMeta.defaultClasses)
+  );
   const [showUniverse, setShowUniverse] = useState(false);
   const [universeSearch, setUniverseSearch] = useState("");
   const [aiSummary, setAiSummary] = useState<MarketSummary | null>(null);
@@ -152,12 +219,12 @@ export default function MultiAssetDashboard({ assets, universe, insights }: Prop
   const period = PERIODS[periodIdx];
 
   const runMarketSummary = () => {
-    const sorted = [...filtered].sort((a, b) => calcMetrics(b.sliced).ret - calcMetrics(a.sliced).ret);
+    const sorted = [...filtered].sort((a, b) => calcMetrics(b.sliced, b.assetType).ret - calcMetrics(a.sliced, a.assetType).ret);
     const topGainers = sorted.slice(0, 3).map((a) => ({
-      ticker: a.ticker, ret: calcMetrics(a.sliced).ret, assetType: a.assetType,
+      ticker: a.ticker, ret: calcMetrics(a.sliced, a.assetType).ret, assetType: a.assetType,
     }));
     const topLosers = sorted.slice(-3).reverse().map((a) => ({
-      ticker: a.ticker, ret: calcMetrics(a.sliced).ret, assetType: a.assetType,
+      ticker: a.ticker, ret: calcMetrics(a.sliced, a.assetType).ret, assetType: a.assetType,
     }));
     const vixAsset = assets.find((a) => a.ticker === "^VIX");
     const vix = vixAsset?.data?.at(-1)?.close;
@@ -175,9 +242,42 @@ export default function MultiAssetDashboard({ assets, universe, insights }: Prop
     const usdAssetData = spyAsset ? slice(spyAsset.data) : undefined;
     const usdkrwData = usdkrwAsset ? slice(usdkrwAsset.data) : undefined;
 
+    // BTC 사이클 — data-analysis.md 8.4
+    const btcAsset = assets.find((a) => a.ticker === "BTC-USD");
+    const btcData = btcAsset?.data;
+
+    // USD 강세 6통화 점수 — data-analysis.md 8.3
+    // 6 통화 쌍 3개월 변동률을 USD 강세 방향(+)으로 부호 통일
+    const pct3M = (data?: OHLCV[]): number | null => {
+      if (!data || data.length < 63) return null;
+      const last = data[data.length - 1].close;
+      const first = data[data.length - 63].close;
+      return last / first - 1;
+    };
+    const fxPairs: { ticker: string; usdIsBase: boolean }[] = [
+      { ticker: "USDKRW=X", usdIsBase: true },
+      { ticker: "USDJPY=X", usdIsBase: true },
+      { ticker: "USDCNY=X", usdIsBase: true },
+      { ticker: "USDCAD=X", usdIsBase: true },
+      { ticker: "EURUSD=X", usdIsBase: false }, // EUR/USD 하락 = USD 강세
+      { ticker: "GBPUSD=X", usdIsBase: false }, // GBP/USD 하락 = USD 강세
+    ];
+    const usdStrengthSignals: number[] = [];
+    for (const fp of fxPairs) {
+      const fx = assets.find((a) => a.ticker === fp.ticker);
+      const ret = pct3M(fx?.data);
+      if (ret != null) {
+        // usdIsBase=true: USDKRW 상승 = USD 강세 (그대로)
+        // usdIsBase=false: EURUSD 상승 = USD 약세 (부호 반전)
+        usdStrengthSignals.push(fp.usdIsBase ? ret : -ret);
+      }
+    }
+
     setAiSummary(generateMarketSummary({
       topGainers, topLosers, vix, yieldCurveSlope, period: period.label,
       usdAssetData, usdkrwData,
+      btcData,
+      usdStrengthSignals,
     }));
   };
 
@@ -249,6 +349,7 @@ export default function MultiAssetDashboard({ assets, universe, insights }: Prop
         sector: ASSET_CLASS_LABELS[a.assetType],
         color: ASSET_CLASS_COLORS[a.assetType],
         cumulativeReturns: data.map((d) => d.close / base - 1),
+        assetType: a.assetType,
       };
     });
 
@@ -256,7 +357,20 @@ export default function MultiAssetDashboard({ assets, universe, insights }: Prop
   }, [assets, selectedTypes, period]);
 
   const totalAssets = filtered.length;
-  const positiveCount = filtered.filter((a) => calcMetrics(a.sliced).ret > 0).length;
+  const positiveCount = filtered.filter((a) => calcMetrics(a.sliced, a.assetType).ret > 0).length;
+
+  // 히어로 영역 — 페르소나가 강조하는 자산 클래스 중 최고 수익률 자산
+  const heroAsset = useMemo(() => {
+    const candidates = filtered.filter((a) => personaMeta.defaultClasses.includes(a.assetType));
+    if (candidates.length === 0) return null;
+    const sorted = [...candidates].sort((a, b) => calcMetrics(b.sliced, b.assetType).ret - calcMetrics(a.sliced, a.assetType).ret);
+    return sorted[0];
+  }, [filtered, personaMeta]);
+
+  const heroMetrics = heroAsset ? calcMetrics(heroAsset.sliced, heroAsset.assetType) : null;
+  const heroSliced = heroAsset?.sliced ?? [];
+  const heroBase = heroSliced[0]?.close ?? 1;
+  const heroCumReturns = heroSliced.map((d) => d.close / heroBase - 1);
 
   // Universe (S&P 500) — 검색 + 정렬
   const universeFiltered = useMemo(() => {
@@ -300,11 +414,98 @@ export default function MultiAssetDashboard({ assets, universe, insights }: Prop
         </div>
       </div>
 
+      {/* 페르소나 배너 — MASTER_SKILL.md 8절 URL ?persona= 분기 */}
+      <section
+        className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3"
+        style={{ borderColor: `${personaMeta.color}40`, backgroundColor: `${personaMeta.color}0d` }}
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">{personaMeta.emoji}</span>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500">현재 페르소나</span>
+              <span className="font-semibold text-sm" style={{ color: personaMeta.color }}>
+                {personaMeta.label}
+              </span>
+            </div>
+            <p className="text-xs text-gray-600">{personaMeta.description}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5 text-xs">
+          <span className="text-gray-500">전환:</span>
+          {(Object.keys(PERSONA_META) as PersonaType[]).map((p) => (
+            <a
+              key={p}
+              href={`/?persona=${p}`}
+              className={`rounded-full border px-2.5 py-1 transition-colors ${
+                p === persona
+                  ? "border-transparent text-white"
+                  : "border-gray-200 text-gray-500 hover:border-gray-400 hover:text-gray-900"
+              }`}
+              style={p === persona ? { backgroundColor: PERSONA_META[p].color } : undefined}
+            >
+              {PERSONA_META[p].emoji} {PERSONA_META[p].label}
+            </a>
+          ))}
+        </div>
+      </section>
+
       {/* 초보 투자자 진입 배너 */}
       <a href="/demo" className="flex items-center justify-between rounded-lg border border-blue-100 bg-blue-50 px-4 py-2.5 text-sm hover:bg-blue-100 transition-colors">
         <span className="text-blue-700">🚀 <strong>처음이신가요?</strong> 5분 안에 모든 기능을 둘러볼 수 있습니다.</span>
         <span className="text-blue-500 text-xs font-medium">둘러보기 →</span>
       </a>
+
+      {/* E1 — 히어로 영역: 페르소나가 강조하는 자산 중 최고 수익률 자산 */}
+      {heroAsset && heroMetrics && heroCumReturns.length >= 2 && (
+        <section className="hero-card fade-up">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 text-xs" style={{ color: "var(--text-muted)" }}>
+                <span>{personaMeta.emoji}</span>
+                <span>오늘의 {personaMeta.label} 톱픽 — {ASSET_CLASS_LABELS[heroAsset.assetType]} 부문 1위</span>
+              </div>
+              <div className="mt-2 flex flex-wrap items-baseline gap-3">
+                <span className="text-3xl font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
+                  {heroAsset.ticker}
+                </span>
+                <span className="truncate text-sm" style={{ color: "var(--text-muted)" }}>
+                  {heroAsset.name}
+                </span>
+              </div>
+              <div className="mt-3 flex flex-wrap items-baseline gap-4 text-sm">
+                <div>
+                  <span style={{ color: "var(--text-muted)" }}>{period.label} 수익률 </span>
+                  <span className={`text-2xl font-bold tabular-nums ${heroMetrics.ret >= 0 ? "text-positive" : "text-negative"}`}>
+                    {heroMetrics.ret >= 0 ? "+" : ""}{(heroMetrics.ret * 100).toFixed(2)}%
+                  </span>
+                </div>
+                <div>
+                  <span style={{ color: "var(--text-muted)" }}>변동성 </span>
+                  <span className="font-mono tabular-nums" style={{ color: "var(--text-primary)" }}>
+                    {(heroMetrics.vol * 100).toFixed(1)}%
+                  </span>
+                </div>
+                <div>
+                  <span style={{ color: "var(--text-muted)" }}>MDD </span>
+                  <span className="font-mono tabular-nums text-negative">
+                    {(heroMetrics.mdd * 100).toFixed(1)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="shrink-0">
+              <Sparkline
+                values={heroCumReturns.map((v) => v * 100)}
+                width={200}
+                height={64}
+                color="auto"
+                strokeWidth={2}
+              />
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* 자산 클래스 필터 */}
       <section className="rounded-lg border border-gray-200 bg-gray-50 p-3">
@@ -389,24 +590,34 @@ export default function MultiAssetDashboard({ assets, universe, insights }: Prop
         );
       })()}
 
-      {/* 요약 KPI */}
+      {/* 요약 KPI — E2 스파크라인 추가 */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-          <p className="text-xs text-gray-500">{T.trackedAssets}</p>
-          <p className="mt-1 text-2xl font-bold">{totalAssets}</p>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-          <p className="text-xs text-gray-500">{T.assetClasses}</p>
-          <p className="mt-1 text-2xl font-bold">{selectedTypes.size}</p>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-          <p className="text-xs text-gray-500">{T.positiveAssets} ({period.label})</p>
-          <p className="mt-1 text-2xl font-bold text-green-400">{positiveCount}</p>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-          <p className="text-xs text-gray-500">{T.negativeAssets} ({period.label})</p>
-          <p className="mt-1 text-2xl font-bold text-red-400">{totalAssets - positiveCount}</p>
-        </div>
+        <KpiCard
+          label={T.trackedAssets}
+          value={totalAssets}
+          spark={filtered.slice(0, 30).map((a) => calcMetrics(a.sliced, a.assetType).ret)}
+          sparkColor="auto"
+        />
+        <KpiCard
+          label={T.assetClasses}
+          value={selectedTypes.size}
+          spark={classReturns.map((c) => c.ret)}
+          sparkColor="auto"
+        />
+        <KpiCard
+          label={`${T.positiveAssets} (${period.label})`}
+          value={positiveCount}
+          valueClass="text-positive"
+          spark={filtered.filter((a) => calcMetrics(a.sliced, a.assetType).ret > 0).slice(0, 30).map((a) => calcMetrics(a.sliced, a.assetType).ret)}
+          sparkColor="var(--positive)"
+        />
+        <KpiCard
+          label={`${T.negativeAssets} (${period.label})`}
+          value={totalAssets - positiveCount}
+          valueClass="text-negative"
+          spark={filtered.filter((a) => calcMetrics(a.sliced, a.assetType).ret <= 0).slice(0, 30).map((a) => calcMetrics(a.sliced, a.assetType).ret)}
+          sparkColor="var(--negative)"
+        />
       </div>
 
       {/* 자산 클래스별 평균 수익률 */}
@@ -436,7 +647,12 @@ export default function MultiAssetDashboard({ assets, universe, insights }: Prop
       <section className="rounded-lg border border-gray-200 bg-gray-50 p-4">
         <h2 className="mb-3 font-semibold">{T.crossAssetPerf} — {T.representativeTickers}</h2>
         {chartData.dates.length > 0 && (
-          <CumulativeReturnChart dates={chartData.dates} series={chartData.series} />
+          <CumulativeReturnChart
+            dates={chartData.dates}
+            series={chartData.series}
+            showBrush
+            enableRouting
+          />
         )}
       </section>
 

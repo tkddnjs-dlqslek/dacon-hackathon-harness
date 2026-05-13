@@ -26,7 +26,7 @@
 | 1.1 Asset 인터페이스 | `dashboard/src/types/index.ts` | `interface Asset` |
 | 1.2 OHLCV 인터페이스 | `dashboard/src/types/index.ts` | `interface OHLCV` |
 | 2.1 어댑터 시그니처 | `dashboard/src/lib/adapters/types.ts` | `interface DataAdapter` |
-| 2.2 티커 패턴 추론 | `dashboard/src/lib/adapters/index.ts` | `inferAssetType(ticker)` |
+| 2.2 티커 패턴 추론 | `dashboard/src/lib/adapters/types.ts` | `inferAssetTypeFromTicker(ticker)` |
 | 2.3 yfinance 어댑터 | `dashboard/src/lib/adapters/yfinance.ts` | `class YfinanceAdapter` |
 | 2.3 csv 어댑터 | `dashboard/src/lib/adapters/csv.ts` | `class CsvAdapter` |
 | 4.1 결측치 처리 | `dashboard/src/lib/analysis-engine.ts` | `fillMissing(data)` |
@@ -46,12 +46,14 @@
 | 3.1 베타 (equity_etf) | `analysis-engine.ts` | `beta(assetRets, benchRets)` |
 | 3절 자산 타입별 분기 | `dashboard/src/lib/asset-profiles.ts` | `ASSET_PROFILES` 레지스트리 |
 | 4.2 가중 수익률·변동성 | `analysis-engine.ts` | `portfolioReturn`, `portfolioVolatility` |
-| 4.4 리밸런싱 시뮬 | `analysis-engine.ts` | `rebalanceSimulation(...)` |
-| 5절 ETF vs 직접투자 | `analysis-engine.ts` | `compareETFvsDirect(settings)` |
+| 4.4 리밸런싱 시뮬 | `analysis-engine.ts` + `portfolio/PortfolioBuilder.tsx` | `rebalanceSimulation` (정의) + inline 호출 (PortfolioBuilder) |
+| 5절 ETF vs 직접투자 | `analysis-engine.ts` + `compare/ComparePanel.tsx` | `compareETFvsDirect` (정의) + inline 호출 (ComparePanel) |
 | 6.1 자산 클래스 통합 지표 | `analysis-engine.ts` | `computeMetrics`, `computeMetricsWithBenchmark` |
-| **7절 KRW 환산 (3요소 분해)** | `analysis-engine.ts` | `krwAdjustedReturn(asset, usdkrw)` |
-| 7.3 환율 헤지 비용 | `analysis-engine.ts` | `fxHedgeCost(usdkrw, days)` |
-| 8절 매크로 신호 (VIX/일드커브/USD/BTC) | `dashboard/src/lib/rule-summary.ts` + `insight-generator.ts` | `generateMarketSummary`, `generateMacroInsights` |
+| **7절 KRW 환산 (3요소 분해)** | `analysis-engine.ts` + `rule-summary.ts` | `krwAdjustedReturn` (사용 중) |
+| 7.3 환율 헤지 비용 | `analysis-engine.ts` | `fxHedgeCost` ⚠️ 선언만 — Phase 4 활성화 후보 |
+| 8절 매크로 신호 (VIX/일드커브) | `rule-summary.ts` | `generateMarketSummary` (메인 대시보드 시장 분석 카드) |
+| 8.3 USD 4-of-6 강세 | `rule-summary.ts` | `usdStrengthCount` (내부 함수) |
+| 8.4 BTC 30D/90D 사이클 | `rule-summary.ts` | `btcCycle` (내부 함수) |
 
 ### 2.3 시각화 (visualization.md)
 
@@ -72,16 +74,18 @@
 
 | Skills 규칙 | 구현 파일 | 함수/타입 |
 |------------|----------|---------|
-| 2절 개별 ETF 인사이트 | `dashboard/src/lib/insight-generator.ts` | `generateETFInsights(metrics)` |
-| 3절 포트폴리오 인사이트 | `insight-generator.ts` | `generatePortfolioInsights(...)` |
-| 3절 리밸런싱 신호 | `insight-generator.ts` | `generateRebalancingInsights(...)` |
-| 4절 섹터 비교 | `insight-generator.ts` | `generateSectorInsights(...)` |
-| 5절 ETF vs 직접 비교 | `insight-generator.ts` | `generateCompareInsights(...)` |
-| 6절 크로스 에셋 | `insight-generator.ts` | `generateCrossAssetInsights(params)` |
-| 7절 매크로(VIX/일드커브/환율) | `insight-generator.ts` | `generateMacroInsights(params)` |
-| 8절 페르소나별 분기 | `insight-generator.ts` | `generatePersonaInsights(persona, ...)` |
-| 9절 우선순위 정렬 | `insight-generator.ts` | `sortInsights(insights)`, `topInsights(insights, max)` |
-| 11절 임계값 상수 | 각 generator 함수 내부 | inline (예: `r1m > 10` 같은 if문) |
+| 2절 개별 ETF 인사이트 | `dashboard/src/lib/insight-generator.ts` + `sector/[id]/page.tsx` | `generateETFInsights` (섹터 페이지에서 호출) |
+| 3절 포트폴리오 인사이트 | `insight-generator.ts` | `generatePortfolioInsights` ⚠️ 정의됨, 호출 미연결 |
+| 3절 리밸런싱 신호 | `insight-generator.ts` | `generateRebalancingInsights` ⚠️ 정의됨, 호출 미연결 |
+| 4절 섹터 비교 | `insight-generator.ts` | `generateSectorInsights` ⚠️ 정의됨, 호출 미연결 |
+| 5절 ETF vs 직접 비교 | `insight-generator.ts` | `generateCompareInsights` ⚠️ 정의됨, 호출 미연결 |
+| 6절 크로스 에셋 | `insight-generator.ts` + `app/page.tsx` | `generateCrossAssetInsights` (메인 페이지에서 호출, 인사이트 배너에 합류) |
+| 7절 매크로(VIX/일드커브/환율) | `rule-summary.ts` | `generateMarketSummary` (메인 페이지 시장 분석 카드) — `generateMacroInsights`는 ⚠️ 정의만 |
+| 8절 페르소나별 분기 | `insight-generator.ts` + `app/page.tsx` | `generatePersonaInsights` (URL `?persona=`로 메인 페이지에서 호출) |
+| 9절 우선순위 정렬 | `insight-generator.ts` + `app/page.tsx` | `sortInsights`, `topInsights` (호출 중) |
+| 11절 임계값 상수 | 각 generator 함수 내부 | inline (예: `r1m > 10` 같은 if문) — Skills 11절 표와 1:1 |
+
+> **⚠️ 표기 의미**: "정의됨, 호출 미연결" = Skills 룰이 코드 함수로 변환되어 있고 export 됐지만, 현재 대시보드 어느 페이지도 호출하지 않음. Phase 4 페이지 추가 시 즉시 활성화 가능. 정직성 유지를 위해 미연결 상태를 명시.
 
 ### 2.5 페르소나·레지스트리 (MASTER_SKILL.md)
 
